@@ -77,26 +77,47 @@ API Gateway (FastAPI)
 
 ## 🚀 快速開始
 
+### 方法一：Docker Compose（推薦）
+
 ```bash
 # 1. Clone 專案
 git clone <repo-url>
 cd 比賽資料
 
-# 2. 啟動服務
+# 2. 設定環境變數
+cp .env.example .env  # 編輯 .env 設定 API Keys
+
+# 3. 啟動所有服務
 docker-compose up -d
 
-# 3. 安裝依賴
-pip install -r requirements.txt
-
-# 4. 執行 Migration
+# 4. 執行資料庫 Migration
 python3 scripts/run_migration.py 001_create_user_system_tables
 
-# 5. 啟動 API
-python3 start_server.py
-
-# 6. 測試
+# 5. 測試系統
 python3 scripts/test_complete_flow.py
 ```
+
+### 方法二：本地開發
+
+```bash
+# 1. 啟動基礎服務
+docker-compose up -d postgres redis osrm-backend
+
+# 2. 安裝 Python 依賴
+pip install -r requirements.txt
+
+# 3. 執行 Migration
+python3 scripts/run_migration.py 001_create_user_system_tables
+
+# 4. 啟動 API 服務
+python3 start_server.py
+
+# 5. 測試系統
+python3 scripts/test_complete_flow.py
+```
+
+**API 服務將在**: http://localhost:8001  
+**API 文件**: http://localhost:8001/docs
 
 詳細說明: [快速啟動指南](docs/快速啟動指南.md)
 
@@ -139,7 +160,7 @@ POST   /v1/itinerary/propose          # 生成行程
 POST   /v1/itinerary/feedback         # 修改行程
 ```
 
-**完整 API 文件**: http://localhost:8000/docs
+**完整 API 文件**: http://localhost:8001/docs
 
 ---
 
@@ -206,10 +227,12 @@ POST   /v1/itinerary/feedback         # 修改行程
 - **路網計算**: OSRM
 - **距離計算**: Haversine 公式
 
-### 前端（規劃中）
-- **框架**: React / Vue.js
+### 前端（開發中）
+- **框架**: Next.js 14 + React 18
 - **樣式**: Tailwind CSS
-- **地圖**: Leaflet / Google Maps
+- **狀態管理**: Zustand
+- **表單**: React Hook Form + Zod
+- **UI 組件**: Headless UI
 
 ---
 
@@ -222,12 +245,15 @@ POST   /v1/itinerary/feedback         # 修改行程
 - ✅ 景點推薦模組
 - ✅ AI 行程規劃整合
 
-### 📋 Phase 2: 前端開發（待開始）
-- [ ] 前端專案設定
-- [ ] 註冊/登入頁面
-- [ ] 行程規劃頁面
+### 🔄 Phase 2: 前端開發（進行中）
+- [x] 前端專案設定（Next.js + Tailwind）
+- [x] 基礎 UI 組件庫
+- [x] 認證頁面（登入/註冊）
+- [x] 首頁與導航
+- [x] 行程規劃頁面（三欄式布局）
 - [ ] 景點推薦頁面
 - [ ] 會員中心
+- [ ] 行程管理頁面
 
 ### 📋 Phase 3: 測試與優化
 - [ ] 單元測試
@@ -305,11 +331,11 @@ MIT License
 
 ## 🔗 相關連結
 
-- API 文件: http://localhost:8000/docs
+- API 文件: http://localhost:8001/docs
 - 系統架構: [架構文件](docs/系統架構設計文件.md)
 - 開發進度: [TODO](TODO.md)
 
 ---
 
 **最後更新**: 2025-09-30  
-**版本**: v2.0 - Phase 1 完成
+**版本**: v2.1 - Phase 2 前端開發中
