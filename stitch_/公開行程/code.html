@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Plus+Jakarta+Sans:wght@400;500;700;800" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<title>Stitch Design</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#13a4ec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101c22",
+            },
+            fontFamily: {
+              display: ["Plus Jakarta Sans"],
+            },
+            borderRadius: { DEFAULT: "0.5rem", lg: "1rem", xl: "1.5rem", full: "9999px" },
+          },
+        },
+      };
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+<div class="flex h-auto min-h-screen w-full flex-col">
+<header class="sticky top-0 z-50 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-background-light/80 dark:bg-background-dark/80 px-10 py-3 backdrop-blur-sm">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-gray-900 dark:text-white">
+<svg class="h-8 w-8 text-primary" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6_319)">
+<path d="M8.57829 8.57829C5.52816 11.6284 3.451 15.5145 2.60947 19.7452C1.76794 23.9758 2.19984 28.361 3.85056 32.3462C5.50128 36.3314 8.29667 39.7376 11.8832 42.134C15.4698 44.5305 19.6865 45.8096 24 45.8096C28.3135 45.8096 32.5302 44.5305 36.1168 42.134C39.7033 39.7375 42.4987 36.3314 44.1494 32.3462C45.8002 28.361 46.2321 23.9758 45.3905 19.7452C44.549 15.5145 42.4718 11.6284 39.4217 8.57829L24 24L8.57829 8.57829Z" fill="currentColor"></path>
+</g>
+<defs>
+<clipPath id="clip0_6_319">
+<rect fill="white" height="48" width="48"></rect>
+</clipPath>
+</defs>
+</svg>
+<h1 class="text-xl font-bold">JourneyCraft</h1>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition-colors" href="#">Explore</a>
+<a class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition-colors" href="#">Create</a>
+<a class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition-colors" href="#">My Trips</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"> search </span>
+<input class="form-input w-full rounded-full border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 py-2 pl-10 pr-4 text-sm focus:border-primary focus:ring-primary" placeholder="Search" type="search"/>
+</div>
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined text-xl"> notifications </span>
+</button>
+<div class="h-10 w-10 rounded-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCiIswnwE8pXfUozVP3vykPA-TCf-Iy85NouL6hjyVx2YchPrJUdo6BDAxM0gQ0h30JhyWPAkaM6sL0BPHdzWpS8c999a20aaPkxJft310KHWFx2BGqpvdZ8KuET3GZto3CyT66HftPyRIii3pMIkwH4qPFYqXKhSiy3nklmyF5xWRJpNGrqKKx0kFbieapNoZoQreWKP3r4jH-du73BODCo3RPcJVmFQ3pwnjFNDoUqgpHBmOJ2nikhrJ5ZLaIJDvPIdEc3xmE2Ms");'></div>
+</div>
+</header>
+<main class="flex flex-1 justify-center px-4 py-8 sm:px-6 lg:px-8">
+<div class="w-full max-w-4xl space-y-8">
+<div>
+<h2 class="text-4xl font-bold text-gray-900 dark:text-white">Discovering the Wonders of Kyoto</h2>
+<p class="mt-2 text-lg text-gray-600 dark:text-gray-400">A 5-day journey through the heart of Japan's ancient capital</p>
+</div>
+<div class="border-b border-gray-200 dark:border-gray-700">
+<nav aria-label="Tabs" class="-mb-px flex space-x-8">
+<a class="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200 whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium" href="#"> Overview </a>
+<a aria-current="page" class="border-primary text-primary whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium" href="#"> Details </a>
+</nav>
+</div>
+<div class="space-y-8">
+<div>
+<h3 class="text-2xl font-bold text-gray-900 dark:text-white">Trip Timeline</h3>
+<div class="mt-6 flow-root">
+<ul class="-mb-8">
+<li>
+<div class="relative pb-8">
+<span aria-hidden="true" class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"></span>
+<div class="relative flex items-start space-x-4">
+<div class="relative">
+<img alt="" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-400 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFfbJCpxUW7A_av-9fYziB1CpK6VZ284PduHSRK91koy9eM_RVNny1VWp9cvgjy_m3jrthHm1SXOMuOb5Rzx2hl0RUHuHa4Q9s-D-TNlMwyIlasGOesoUN876uQGEQwYjVAEH9lh4HlgvojzUDuMCUjP-sX0faLn4iUeAnBnxucUsTtw2V8ipxnZw6h1RZ4D97-jbucOZRXNzFipeTPw5pDVImyJmJ7LM_yRGllurwUdDqXjZ8eSL90Jp6j3Z8eCnnWQS6XmzMjdU"/>
+</div>
+<div class="min-w-0 flex-1 pt-1.5">
+<p class="font-semibold text-gray-900 dark:text-white">Day 1: Arrival and Gion Exploration</p>
+<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Explore Gion's geisha district and enjoy traditional tea ceremonies.</p>
+</div>
+</div>
+</div>
+</li>
+<li>
+<div class="relative pb-8">
+<span aria-hidden="true" class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"></span>
+<div class="relative flex items-start space-x-4">
+<div class="relative">
+<img alt="" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-400 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqvyQchv7CNiL4BLhLTdXt_7P-Af6fKszDpLsgCqNr656GRdb28B9J0pcxYgtoGPbZxhi_yEoOjdMIpknz54BVHIuHpg4MJWLGFo9NGKw_4KdVcIScYLMd23mLRXY1Lj4V4wJgPoJ-d8k7XAox7AIogy7iOKHxbq4scHCt4jsBDng5UQGpqfmTKz4J_PJNOzYMziZxYEXobKpbEKkG2tLozw3lfGF_b7Z-Sl-keE5j_14vhHcyfxMlq0hetmHek6LSwQCgb6_pCn4"/>
+</div>
+<div class="min-w-0 flex-1 pt-1.5">
+<p class="font-semibold text-gray-900 dark:text-white">Day 2: Temples and Gardens</p>
+<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Visit Kinkaku-ji (Golden Pavilion) and Ryoan-ji's Zen garden.</p>
+</div>
+</div>
+</div>
+</li>
+<li>
+<div class="relative pb-8">
+<span aria-hidden="true" class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"></span>
+<div class="relative flex items-start space-x-4">
+<div class="relative">
+<img alt="" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-400 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOGRzm3gmkn1e-lTYXN7lyPl3VkY14EYkQIL5LqOagO0wJWXgVMAzwXmpOFf2vjGex7DEeNuhe-fsQBA-nj-JwvcEO2e2k8Y_H4bQfRulejQf1jghm5p-OsqjtPby62qAE3hojP2ekLQtr6mDweRZxiFt2aMjO3UdiIuWcOgCuHqLFOhQnjO_uRnxd1XP53uvdS7y46ghTCOjHLy3fBScjn_b946N7G56gxELMlTUlHgI52qtFHpZ_Jf4wCSXUVFfF4qCgqy-RUkk"/>
+</div>
+<div class="min-w-0 flex-1 pt-1.5">
+<p class="font-semibold text-gray-900 dark:text-white">Day 3: Arashiyama Bamboo Grove</p>
+<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Wander through the enchanting Arashiyama Bamboo Grove and Tenryu-ji Temple.</p>
+</div>
+</div>
+</div>
+</li>
+<li>
+<div class="relative pb-8">
+<span aria-hidden="true" class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"></span>
+<div class="relative flex items-start space-x-4">
+<div class="relative">
+<img alt="" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-400 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQwbqtDiiSlF2su5eKikjD0LKnGIn3kF8xseu72dGtMS_h87KWmMfgaReM-FBK2s0kQXJOhdbSxl9hCF3uvVSl4RIEJnFbodpTdCvcGVJU9Mj3CqNI7jotkFqoQrlDGgOYraTAf1gbGqUsxNt5gBwIFxtbxD69TOPO7eNNdsQAuHn8unZcazfrxWHE-CWH-fnTcxUowKg3IToNsR6_j3c9wvqZnmPLqZokgH_bD2hQEd9dqrpl2mPdqsCLZwRULWaX84LW-TS0ae0"/>
+</div>
+<div class="min-w-0 flex-1 pt-1.5">
+<p class="font-semibold text-gray-900 dark:text-white">Day 4: Nishiki Market and Shopping</p>
+<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Experience the vibrant Nishiki Market and indulge in local delicacies.</p>
+</div>
+</div>
+</div>
+</li>
+<li>
+<div class="relative">
+<div class="relative flex items-start space-x-4">
+<div class="relative">
+<img alt="" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-400 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDG-ao41r2aYm0LMp4c2N7yJ6nDV7ClUEIcAqBPEWQY_WcWlXd3o_05TcJe_6jTlGzyHqdTn3ZpLl9RT8IqyWmRXwR7QNRGMgJYje-227SyOdfomSyLvFrxQaq2Tro8mm-oubarOSqUh7In--1KVeKKuO6KR95q-vriypcWA57CUoMvIcvP2UoO_NBGPMjS6mO6Mvx8vnHIIcRhsdeD4bG0MvD6i_emwGK0MZmMj2LcEkVHn_9p1wtZVT7CdvlZldvRL9ZBDJb8Wtg"/>
+</div>
+<div class="min-w-0 flex-1 pt-1.5">
+<p class="font-semibold text-gray-900 dark:text-white">Day 5: Departure</p>
+<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Depart from Kyoto, taking cherished memories of your journey.</p>
+</div>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div>
+<h3 class="text-2xl font-bold text-gray-900 dark:text-white">Route Map</h3>
+<div class="mt-4 aspect-video w-full overflow-hidden rounded-xl">
+<img alt="Kyoto Route Map" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDe_oyb7M1NIM5WFk24ZCS_EWcWZaeZAtSqJzACZ0XIXvkGLQwfduLEy9rKeRweIevsCiBEPgljqWt1dpj07iPo_OFSrUbCyS1VQ9y2MHpoDCJ5PfJiowMa4AL34Qb1F4ZFWjtG1_RRjP0terHyoGp49V6bxvpUTtVa4miYzrLQmVhlEtsiU3YYdlUpXXcjB7UAqNjxl-TZo3zyMTwjKx3uM_k94Una3IoX30yYRyUGedlfy-8xF-Uf3-Q6rCaWjdtz67qpltCNwik"/>
+</div>
+</div>
+<div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+<div class="flex gap-4">
+<button class="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark">Copy Trip</button>
+<button class="inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-gray-700 px-5 py-2.5 text-sm font-semibold text-gray-800 dark:text-gray-200 shadow-sm transition-colors hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark">Download Trip</button>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400">Viewed 1,234 times</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

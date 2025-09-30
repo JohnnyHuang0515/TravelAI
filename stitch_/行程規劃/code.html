@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stitch Design</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#13a4ec",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101c22",
+          },
+          fontFamily: {
+            "display": ["Plus Jakarta Sans"]
+          },
+          borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="flex h-screen">
+<div class="w-80 border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col">
+<div class="flex items-center gap-2 mb-8">
+<div class="w-8 h-8 bg-primary rounded-full"></div>
+<span class="text-xl font-bold text-slate-900 dark:text-white">TripPlanner</span>
+</div>
+<nav class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+<span class="text-white font-bold text-sm">1</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm text-slate-500 dark:text-slate-400">Step 1</span>
+<span class="font-bold text-slate-900 dark:text-white">Your Trip</span>
+</div>
+</div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700 ml-4"></div>
+<div class="flex items-center gap-3 opacity-50">
+<div class="w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center">
+<span class="text-slate-500 dark:text-slate-400 font-bold text-sm">2</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm text-slate-500 dark:text-slate-400">Step 2</span>
+<span class="font-bold text-slate-900 dark:text-white">Destinations</span>
+</div>
+</div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700 ml-4"></div>
+<div class="flex items-center gap-3 opacity-50">
+<div class="w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center">
+<span class="text-slate-500 dark:text-slate-400 font-bold text-sm">3</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm text-slate-500 dark:text-slate-400">Step 3</span>
+<span class="font-bold text-slate-900 dark:text-white">Itinerary</span>
+</div>
+</div>
+</nav>
+</div>
+<main class="flex-1 flex flex-col p-6">
+<div class="flex-1 flex flex-col justify-center items-center text-center">
+<div class="max-w-2xl mx-auto">
+<h1 class="text-4xl font-bold text-slate-900 dark:text-white mb-4">Describe your ideal trip</h1>
+<p class="text-slate-600 dark:text-slate-400 mb-8">
+            Tell us about your dream vacation. What kind of activities do you enjoy? What's your budget? What's your travel style? The more details you provide, the better we can tailor the perfect itinerary for you.
+          </p>
+</div>
+<div class="w-full max-w-3xl px-4">
+<div class="relative">
+<div class="absolute inset-y-0 left-0 flex items-center pl-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCOJn6NoBsjdTglK_5tzb2NGWK2Ddj6EP6HxHgDxGEo3A9dmE46lswc_45etgR_OK09t2IdX_H_Y3zexyd8QQTJAptN-PL-_gIDGyjd5bjY3RNwyPAVUKeoivpcMSghm7xBHJaN1OwCl5X7_WOgHkIekO2nHEBX1_ZcczuTreMTn6ciB21G8ot1eFilWEcvt0j_GMHab9E0rsQTgqgG19sFPKaPoYwOT1Kr3WSundqAzzmHOa49PeLKzNiPsPf8DFmAkxiRtEJ8q08");'></div>
+</div>
+<input class="w-full h-16 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg pl-16 pr-20 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-primary focus:outline-none transition duration-300" placeholder="e.g., A 1-week relaxing beach vacation in Bali with a budget of $2000" type="text"/>
+<button class="absolute inset-y-0 right-0 flex items-center justify-center w-16 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded-r-lg transition-colors">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<aside class="w-96 bg-white dark:bg-slate-900/50 border-l border-slate-200 dark:border-slate-800 p-6 flex flex-col">
+<h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Your Itinerary</h2>
+<div class="flex-1 overflow-y-auto space-y-4">
+<div class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-background-dark shadow-sm">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
+<span class="text-sm font-bold text-primary">10:00</span>
+<span class="text-xs text-primary/80">AM</span>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-slate-800 dark:text-slate-200">Visit the Eiffel Tower</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Iconic landmark in Paris.</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-background-dark shadow-sm">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
+<span class="text-sm font-bold text-primary">01:00</span>
+<span class="text-xs text-primary/80">PM</span>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-slate-800 dark:text-slate-200">Louvre Museum</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Home to the Mona Lisa.</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 rounded-lg bg-background-light dark:bg-background-dark shadow-sm">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
+<span class="text-sm font-bold text-primary">04:00</span>
+<span class="text-xs text-primary/80">PM</span>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-slate-800 dark:text-slate-200">Seine River Cruise</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Enjoy the views of Paris.</p>
+</div>
+</div>
+</div>
+</aside>
+</div>
+
+</body></html>

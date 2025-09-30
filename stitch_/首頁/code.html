@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trip Planner</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13a4ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101c22",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200">
+<div class="flex flex-col min-h-screen">
+<header class="sticky top-0 z-50 w-full bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between h-16">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-3xl">explore</span>
+<h2 class="text-xl font-bold text-slate-900 dark:text-white">Trip Planner</h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Explore</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">About</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Contact</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-full hover:bg-primary/90 transition-colors">
+                            Start Planning
+                        </button>
+<button class="md:hidden p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow">
+<section class="relative">
+<div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDvIWncPxHF7lpnfUugRXBvNXEPMKe39xjD_gJHDFzvUj85XSlDw-Gg1F_Ka0qYXV8OFpbzhGelI0jg_sAxtN77L9PWpuaFWu1n8cCY5KNn6MSz1G0CJJbwChbdEH0PLXKuNQrhLV06X5308blT3MLEvniEt_GHaBNCJY7dXIhQ4VDI-t84iDxog9klh-6b71SjItWHxLSL3iHSSQ-oDusaeXNxkiQ6cdz_dKHQdj9VXAg0rgnQdYO-f8vjBl4-jtBoB6K4A2PTuZI");'></div>
+<div class="absolute inset-0 bg-black/50"></div>
+<div class="relative container mx-auto px-4 sm:px-6 lg:px-8 py-32 md:py-48 text-center text-white">
+<h1 class="text-4xl md:text-6xl font-extrabold tracking-tighter">Plan Your Perfect Trip</h1>
+<p class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-slate-200">
+                        Discover amazing destinations and create personalized itineraries with ease.
+                    </p>
+<button class="mt-8 px-8 py-3 bg-primary text-white text-base font-bold rounded-full hover:bg-primary/90 transition-transform transform hover:scale-105">
+                        Start Planning
+                    </button>
+</div>
+</section>
+<section class="py-16 sm:py-24 bg-background-light dark:bg-background-dark">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+<div class="text-center max-w-3xl mx-auto">
+<h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">Features</h2>
+<p class="mt-4 text-lg text-slate-600 dark:text-slate-400">Our app offers a range of features to help you plan your perfect trip.</p>
+</div>
+<div class="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+<div class="flex flex-col items-center text-center p-8 bg-white dark:bg-slate-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+<div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined">place</span>
+</div>
+<h3 class="mt-5 text-lg font-semibold text-slate-900 dark:text-white">Destination Discovery</h3>
+<p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Explore popular destinations and hidden gems.</p>
+</div>
+<div class="flex flex-col items-center text-center p-8 bg-white dark:bg-slate-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+<div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined">calendar_month</span>
+</div>
+<h3 class="mt-5 text-lg font-semibold text-slate-900 dark:text-white">Itinerary Builder</h3>
+<p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Create detailed itineraries with activities and timings.</p>
+</div>
+<div class="flex flex-col items-center text-center p-8 bg-white dark:bg-slate-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+<div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary/20 text-primary">
+<span class="material-symbols-outlined">checklist</span>
+</div>
+<h3 class="mt-5 text-lg font-semibold text-slate-900 dark:text-white">Checklist Management</h3>
+<p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Manage your packing and to-do lists effortlessly.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="py-16 sm:py-24 bg-background-light dark:bg-background-dark">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+<div class="text-center max-w-3xl mx-auto">
+<h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">How It Works</h2>
+</div>
+<div class="mt-12 relative">
+<div aria-hidden="true" class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
+<div class="grid md:grid-cols-2 gap-x-12 gap-y-16">
+<div class="relative flex items-start gap-6">
+<div class="absolute left-1/2 -translate-x-1/2 md:hidden top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
+<div class="relative flex-shrink-0">
+<div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white ring-8 ring-background-light dark:ring-background-dark">
+<span class="material-symbols-outlined">place</span>
+</div>
+</div>
+<div class="md:text-right">
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white">Choose Your Destination</h3>
+<p class="mt-1 text-slate-600 dark:text-slate-400">Select from a wide range of destinations.</p>
+</div>
+</div>
+<div></div>
+<div></div>
+<div class="relative flex items-start gap-6">
+<div class="absolute left-1/2 -translate-x-1/2 md:hidden top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
+<div class="relative flex-shrink-0">
+<div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white ring-8 ring-background-light dark:ring-background-dark">
+<span class="material-symbols-outlined">edit_calendar</span>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white">Build Your Itinerary</h3>
+<p class="mt-1 text-slate-600 dark:text-slate-400">Add activities, set timings, and customize your plan.</p>
+</div>
+</div>
+<div class="relative flex items-start gap-6">
+<div class="absolute left-1/2 -translate-x-1/2 md:hidden top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-800"></div>
+<div class="relative flex-shrink-0">
+<div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white ring-8 ring-background-light dark:ring-background-dark">
+<span class="material-symbols-outlined">flight_takeoff</span>
+</div>
+</div>
+<div class="md:text-right">
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white">Enjoy Your Trip</h3>
+<p class="mt-1 text-slate-600 dark:text-slate-400">Access your itinerary on the go and have a great time.</p>
+</div>
+</div>
+<div></div>
+</div>
+</div>
+<div class="mt-16 text-center">
+<button class="px-8 py-3 bg-primary text-white text-base font-bold rounded-full hover:bg-primary/90 transition-transform transform hover:scale-105">
+                            Start Planning Now
+                        </button>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex gap-6">
+<a class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">Terms of Service</a>
+</div>
+<div class="flex gap-4">
+<a class="text-slate-500 hover:text-primary transition-colors" href="#">
+<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46,6.42a9.38,9.38,0,0,1-2.7.75,4.69,4.69,0,0,0,2.07-2.6,9.4,9.4,0,0,1-2.98,1.14,4.68,4.68,0,0,0-8,4.28A13.27,13.27,0,0,1,1.67,2.2,4.69,4.69,0,0,0,3.14,8.4,4.66,4.66,0,0,1,1,7.9v.06a4.68,4.68,0,0,0,3.75,4.59,4.67,4.67,0,0,1-2.1.08,4.69,4.69,0,0,0,4.38,3.25,9.42,9.42,0,0,1-5.83,2,9.5,9.5,0,0,1-1.12-.07,13.22,13.22,0,0,0,7.16,2.09c8.6,0,13.3-7.13,13.3-13.3,0-.2,0-.41,0-.61A9.49,9.49,0,0,0,22.46,6.42Z"></path></svg>
+</a>
+<a class="text-slate-500 hover:text-primary transition-colors" href="#">
+<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm3,10.9v6.5H13.2V12.9H11.5v-2h1.7V9.61c0-1.7,1-2.73,2.65-2.73h1.83v2H16.2c-.82,0-.95.39-.95.93v1.16h2.2l-.28,2Z"></path></svg>
+</a>
+<a class="text-slate-500 hover:text-primary transition-colors" href="#">
+<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm4.2,12.78A2.88,2.88,0,0,1,13.32,18H10.68A2.88,2.88,0,0,1,7.8,15.22V12.78A2.88,2.88,0,0,1,10.68,10h2.64A2.88,2.88,0,0,1,16.2,12.78Zm-2.88-4.24a.88.88,0,1,1-.88-.88A.88.88,0,0,1,13.32,8.54ZM12,10.64a2.64,2.64,0,1,0,2.64,2.64A2.64,2.64,0,0,0,12,10.64Z"></path></svg>
+</a>
+</div>
+</div>
+<p class="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">© 2024 Trip Planner. All rights reserved.</p>
+</div>
+</footer>
+</div>
+
+</body></html>

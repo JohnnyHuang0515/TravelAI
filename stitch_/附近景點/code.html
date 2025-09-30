@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<title>Wanderlust - Nearby Attractions</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#13a4ec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101c22",
+            },
+            fontFamily: {
+              display: ["Plus Jakarta Sans"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              lg: "1rem",
+              xl: "1.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="flex h-screen flex-col">
+<header class="flex shrink-0 items-center justify-between border-b border-black/10 dark:border-white/10 px-6 py-3">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-black dark:text-white">
+<svg class="h-6 w-6 text-primary" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M44 11.2727C44 14.0109 39.8386 16.3957 33.69 17.6364C39.8386 18.877 44 21.2618 44 24C44 26.7382 39.8386 29.123 33.69 30.3636C39.8386 31.6043 44 33.9891 44 36.7273C44 40.7439 35.0457 44 24 44C12.9543 44 4 40.7439 4 36.7273C4 33.9891 8.16144 31.6043 14.31 30.3636C8.16144 29.123 4 26.7382 4 24C4 21.2618 8.16144 18.877 14.31 17.6364C8.16144 16.3957 4 14.0109 4 11.2727C4 7.25611 12.9543 4 24 4C35.0457 4 44 7.25611 44 11.2727Z" fill="currentColor"></path>
+</svg>
+<h1 class="text-lg font-bold">Wanderlust</h1>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors" href="#">Explore</a>
+<a class="text-sm font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors" href="#">Trips</a>
+<a class="text-sm font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors" href="#">Messages</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-black/50 dark:text-white/50">
+              search
+            </span>
+<input class="w-48 rounded bg-black/5 dark:bg-white/5 py-2 pl-10 pr-4 text-sm text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-white/50 border-transparent focus:border-primary focus:ring-0" placeholder="Search" type="text"/>
+</div>
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined"> notifications </span>
+</button>
+<button>
+<div class="h-10 w-10 rounded-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD8cIf7htw4QXKT9cFTRBlhfe1VeTD8WtRa3a5fa3ixDCFzdiAYCnPBpg2CDU0QoyWG4sEd7A4QhHMzmeXmubDINdM3DK7bpgWIr_syAu0vw_1USYR9qW5i6UyH8UHyzyuxfI4tK0NUsuvoxpKj5s2ScpKIQaGYLjBNuOBwd082H6GWcLvyXyG2_HtEj8Orxr1McHE7WCipdDXUgK9lJOhaf7jtHGedC9Qknrce8d6-ralo5ydQqFthKyV0QBp2C2mbzvk4r7xpz58");'></div>
+</button>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden">
+<div class="w-full max-w-xs flex-col border-r border-black/10 dark:border-white/10 lg:flex">
+<div class="p-4">
+<h2 class="text-xl font-bold text-black dark:text-white">
+              Nearby Attractions
+            </h2>
+<div class="mt-4 space-y-3">
+<div class="flex gap-2">
+<button class="flex w-full items-center justify-between rounded bg-black/5 dark:bg-white/5 px-3 py-2 text-sm text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10">
+                  Category
+                  <span class="material-symbols-outlined text-base">
+                    expand_more
+                  </span>
+</button>
+<button class="flex w-full items-center justify-between rounded bg-black/5 dark:bg-white/5 px-3 py-2 text-sm text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10">
+                  Radius
+                  <span class="material-symbols-outlined text-base">
+                    expand_more
+                  </span>
+</button>
+<button class="flex w-full items-center justify-between rounded bg-black/5 dark:bg-white/5 px-3 py-2 text-sm text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10">
+                  Rating
+                  <span class="material-symbols-outlined text-base">
+                    expand_more
+                  </span>
+</button>
+</div>
+<div class="flex gap-2">
+<button class="w-full rounded bg-primary/20 dark:bg-primary/30 px-3 py-2 text-sm font-semibold text-primary">
+                  Distance
+                </button>
+<button class="w-full rounded bg-black/5 dark:bg-white/5 px-3 py-2 text-sm text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10">
+                  Rating
+                </button>
+</div>
+</div>
+</div>
+<div class="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
+<div class="flex cursor-pointer items-center gap-4 rounded-lg bg-primary/10 dark:bg-primary/20 p-2">
+<div class="h-14 w-14 shrink-0 rounded bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCamBdZCVtOPfvg8wky7aqXd7bxErvov53bJrj8cxH6zWn-4v7BzVWC3fV8agV0SouUiH8ZPNs4vdQRF7Dte7ceSKgVUqoVs86JKLDivCPejcJr4cJvHvynDA7q71a6RgF9hqlfEsrtqPi2H79lygZA8UIAPfXoVpADmI2HtjnuhAdWil-245fe1-oYgMmgIuSow0nt5vHxJBQu2ogtXPCPZvrM16pyVd8HT3CksMTCWIP4eqLe4CbL_pUG_LPN_CH8yFPe7ewp8ys");'></div>
+<div class="flex-1 overflow-hidden">
+<p class="truncate font-semibold text-black dark:text-white">
+                  Central Park
+                </p>
+<p class="text-sm text-black/60 dark:text-white/60">
+                  1.2 km · ★ 4.5
+                </p>
+</div>
+<button class="shrink-0 text-black/50 dark:text-white/50 hover:text-primary">
+<span class="material-symbols-outlined"> bookmark_border </span>
+</button>
+</div>
+<div class="flex cursor-pointer items-center gap-4 rounded p-2 hover:bg-black/5 dark:hover:bg-white/5">
+<div class="h-14 w-14 shrink-0 rounded bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDAjR5MHYAzDqLuAUQ1c_aA-ysX323a3eqooWJ3sZZqxh4FBtnJ1LIi019aM34HfRpkxLKoLxkJhFXHOmYRTEshiG8hRdVcmypaXk2G1N0hIW6KMF0eI6nbEVZUgOb3GzZZAP95BVDbqzBUmC51eB4w42-xk-2Ouyq1wHsxPPbRhbkiToZLsi6eC2E4ko0uxdRA3f2sC7IL8PYEbY6Wa8-odHCO3lqq5pm7mBX7vSOXtVXHf6CvK3Bq-9WL0T5wrnbEXim4iALeXW8");'></div>
+<div class="flex-1 overflow-hidden">
+<p class="truncate font-semibold text-black dark:text-white">
+                  Metropolitan Museum of Art
+                </p>
+<p class="text-sm text-black/60 dark:text-white/60">
+                  2.5 km · ★ 4.2
+                </p>
+</div>
+<button class="shrink-0 text-black/50 dark:text-white/50 hover:text-primary">
+<span class="material-symbols-outlined"> bookmark_border </span>
+</button>
+</div>
+<div class="flex cursor-pointer items-center gap-4 rounded p-2 hover:bg-black/5 dark:hover:bg-white/5">
+<div class="h-14 w-14 shrink-0 rounded bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCDkekVXfGtDIPWGkfHCWHPkNWJKf6rJ2OdXJD1Cx-pdFPDDUQeo_qhgARRXwEv32i9iUBvsfsx7rv7LiGfY69R3e1M0ef0dSwoCHoBTzB6Y0Uv2xCPkN0x2fXRMkyf_7UHVA7tiCwYjp9acB01D_agAdkTw_rUaRiio_1vkCfg9mNhVRlBK2D04WxqlvEJ9ykTb63NSruKqvJ_KKYxLElP8NYsDPT7pzkZUvQ1-VWkZsJ6TOyAkAbqKgrlpmjZbm90vHG4Uj8v2YA");'></div>
+<div class="flex-1 overflow-hidden">
+<p class="truncate font-semibold text-black dark:text-white">
+                  Times Square
+                </p>
+<p class="text-sm text-black/60 dark:text-white/60">
+                  3.1 km · ★ 4.8
+                </p>
+</div>
+<button class="shrink-0 text-black/50 dark:text-white/50 hover:text-primary">
+<span class="material-symbols-outlined"> bookmark_border </span>
+</button>
+</div>
+<div class="flex cursor-pointer items-center gap-4 rounded p-2 hover:bg-black/5 dark:hover:bg-white/5">
+<div class="h-14 w-14 shrink-0 rounded bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAHWhPOzHtGoZ3gqxDLlq8_MHgsvVACZJmiKA_x91C0yUbBgCMRpvbYQTYE_NAGtAlzSQkxbQgX6Hgy6c3tYM1y7xsIwhSSJzZaRHnGu9SKTxNr2OdX9fTXc5vxnAMJpdKtVPap0vJo5ndq7FSRc7IbmHV3oDJ0RjSwsKMo3FAGSWNXQq8doBp8-ZoJ3t1CFS9kY1E_YYqG3Yl5fFrirg1oHMzvGLBfOBJcDBF1aZAmfwDFk4rPRfZSYNSsN6bMjRaWFH-wdR2n02c");'></div>
+<div class="flex-1 overflow-hidden">
+<p class="truncate font-semibold text-black dark:text-white">
+                  Empire State Building
+                </p>
+<p class="text-sm text-black/60 dark:text-white/60">
+                  4.0 km · ★ 4.0
+                </p>
+</div>
+<button class="shrink-0 text-black/50 dark:text-white/50 hover:text-primary">
+<span class="material-symbols-outlined"> bookmark </span>
+</button>
+</div>
+<div class="flex cursor-pointer items-center gap-4 rounded p-2 hover:bg-black/5 dark:hover:bg-white/5">
+<div class="h-14 w-14 shrink-0 rounded bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCQM06ZTuVpDK6tAyLtpw2UAwAlZHRU9b8yIdbi8nXlT181mHc0C8DHOCchOq6SpNxrYOxZL4QcP59bJGb-AmNTZ-_M_BHWpD9g0IH_UxGJbkAFBkXZr77zuu2fOVAwaSPl8-S9eenG1PalxL5c6xUp0F0TQej8tx96YYato6XkMowDD-vbnninOl_ANUVsc2O_gI0J7qttIovwV5KCgQVbTDasv4-mYqHdpFZbuyD3W3D6ktWmhyOCKDNTC7UTU1AulJOhT_Mv264");'></div>
+<div class="flex-1 overflow-hidden">
+<p class="truncate font-semibold text-black dark:text-white">
+                  Statue of Liberty
+                </p>
+<p class="text-sm text-black/60 dark:text-white/60">
+                  5.5 km · ★ 4.6
+                </p>
+</div>
+<button class="shrink-0 text-black/50 dark:text-white/50 hover:text-primary">
+<span class="material-symbols-outlined"> bookmark_border </span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex-1 p-4">
+<div class="relative flex h-full w-full flex-col justify-between overflow-hidden rounded-lg bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAsJf9Ta2d9MgckVL2027z2oCovFRUetb82-XgEJdrnknMEo9b2uwJ0fd7ldXgYhIkllaiKGmRZFwLM2159yD_Fy3HlHb1XtVq6pgPvP0-u5zLCLME_qTjLwjHPjN_k4vcCI4giGGEQGqstcmQAJOzWic7oFpxGCNxu42YmpCkYZ5-7yuopvXcr31A4HnyCyzUG6Yr5bNdlLGBqaTezBotOkXXHCJnPE-fkRnXwo0o-87sjHceSRKfzOchisC5hMExdunX2UoifMQY");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+<div class="relative p-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-black/60">
+                  search
+                </span>
+<input class="w-full max-w-sm rounded bg-white/90 py-3 pl-10 pr-4 text-black placeholder-black/60 shadow-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Search for a place" type="text"/>
+</div>
+</div>
+<div class="relative flex items-end justify-end p-4">
+<div class="flex flex-col items-center gap-2">
+<div class="flex flex-col rounded bg-white dark:bg-background-dark shadow-lg">
+<button class="flex h-10 w-10 items-center justify-center text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5">
+<span class="material-symbols-outlined text-xl">
+                      add
+                    </span>
+</button>
+<div class="h-px w-full bg-black/10 dark:bg-white/10"></div>
+<button class="flex h-10 w-10 items-center justify-center text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5">
+<span class="material-symbols-outlined text-xl">
+                      remove
+                    </span>
+</button>
+</div>
+<button class="flex h-10 w-10 items-center justify-center rounded bg-white dark:bg-background-dark text-black dark:text-white shadow-lg hover:bg-black/5 dark:hover:bg-white/5">
+<span class="material-symbols-outlined text-xl"> near_me </span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>
