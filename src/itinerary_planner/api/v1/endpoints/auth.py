@@ -31,7 +31,7 @@ router = APIRouter(prefix="/auth", tags=["認證"])
 # 註冊與登入
 # ============================================================================
 
-@router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service)
@@ -50,21 +50,21 @@ async def register(
             username=request.username
         )
         
-        # 手動建立 UserResponse 避免 Pydantic 驗證問題
-        user_response = UserResponse(
-            id=str(user.id),
-            email=user.email,
-            username=user.username,
-            provider=user.provider,
-            is_verified=user.is_verified,
-            created_at=user.created_at,
-            last_login=user.last_login
-        )
-        return AuthResponse(
-            user=user_response,
-            access_token=access_token,
-            refresh_token=refresh_token
-        )
+        # 直接返回 JSON 避免 Pydantic 驗證問題
+        return {
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "username": user.username,
+                "provider": user.provider,
+                "is_verified": user.is_verified,
+                "created_at": user.created_at.isoformat(),
+                "last_login": user.last_login.isoformat() if user.last_login else None
+            },
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer"
+        }
     
     except ValueError as e:
         raise HTTPException(
@@ -73,7 +73,7 @@ async def register(
         )
 
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login")
 async def login(
     request: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service)
@@ -90,11 +90,21 @@ async def login(
             password=request.password
         )
         
-        return AuthResponse(
-            user=UserResponse.from_orm(user),
-            access_token=access_token,
-            refresh_token=refresh_token
-        )
+        # 直接返回 JSON 避免 Pydantic 驗證問題
+        return {
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "username": user.username,
+                "provider": user.provider,
+                "is_verified": user.is_verified,
+                "created_at": user.created_at.isoformat(),
+                "last_login": user.last_login.isoformat() if user.last_login else None
+            },
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer"
+        }
     
     except ValueError as e:
         raise HTTPException(
@@ -138,13 +148,22 @@ async def logout(current_user: User = Depends(get_current_user)):
 # 使用者資料
 # ============================================================================
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me")
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """取得當前使用者資料"""
-    return UserResponse.from_orm(current_user)
+    # 直接返回 JSON 避免 Pydantic 驗證問題
+    return {
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "username": current_user.username,
+        "provider": current_user.provider,
+        "is_verified": current_user.is_verified,
+        "created_at": current_user.created_at.isoformat(),
+        "last_login": current_user.last_login.isoformat() if current_user.last_login else None
+    }
 
 
-@router.put("/me", response_model=UserResponse)
+@router.put("/me")
 async def update_current_user(
     username: str = None,
     current_user: User = Depends(get_current_user),
@@ -166,7 +185,16 @@ async def update_current_user(
             detail="使用者不存在"
         )
     
-    return UserResponse.from_orm(updated_user)
+    # 直接返回 JSON 避免 Pydantic 驗證問題
+    return {
+        "id": str(updated_user.id),
+        "email": updated_user.email,
+        "username": updated_user.username,
+        "provider": updated_user.provider,
+        "is_verified": updated_user.is_verified,
+        "created_at": updated_user.created_at.isoformat(),
+        "last_login": updated_user.last_login.isoformat() if updated_user.last_login else None
+    }
 
 
 @router.post("/me/change-password", response_model=MessageResponse)
