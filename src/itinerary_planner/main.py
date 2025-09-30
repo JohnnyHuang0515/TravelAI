@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, Query
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Optional
 import logging
@@ -10,6 +11,15 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="智慧旅遊行程規劃器 API",
     version="1.0.0"
+)
+
+# 設定 CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 健康檢查端點

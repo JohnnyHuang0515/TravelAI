@@ -50,8 +50,18 @@ async def register(
             username=request.username
         )
         
+        # 手動建立 UserResponse 避免 Pydantic 驗證問題
+        user_response = UserResponse(
+            id=str(user.id),
+            email=user.email,
+            username=user.username,
+            provider=user.provider,
+            is_verified=user.is_verified,
+            created_at=user.created_at,
+            last_login=user.last_login
+        )
         return AuthResponse(
-            user=UserResponse.from_orm(user),
+            user=user_response,
             access_token=access_token,
             refresh_token=refresh_token
         )

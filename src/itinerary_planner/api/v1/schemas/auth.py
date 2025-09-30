@@ -2,9 +2,10 @@
 認證相關的 Pydantic Schemas
 """
 
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
+from uuid import UUID
 
 
 # ============================================================================
@@ -18,7 +19,7 @@ class RegisterRequest(BaseModel):
     username: Optional[str] = None
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "email": "user@example.com",
                 "password": "securePassword123",
@@ -33,7 +34,7 @@ class LoginRequest(BaseModel):
     password: str
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "email": "user@example.com",
                 "password": "securePassword123"
@@ -66,9 +67,35 @@ class UserResponse(BaseModel):
     created_at: datetime
     last_login: Optional[datetime]
     
-    class Config:
-        orm_mode = True
-        schema_extra = {
+    @classmethod
+    def from_orm(cls, user):
+        """從 ORM 模型建立回應"""
+        return cls(
+            id=str(user.id),
+            email=user.email,
+            username=user.username,
+            provider=user.provider,
+            is_verified=user.is_verified,
+            created_at=user.created_at,
+            last_login=user.last_login
+        )
+    
+    @classmethod
+    def model_validate(cls, user):
+        """Pydantic v2 相容的驗證方法"""
+        return cls(
+            id=str(user.id),
+            email=user.email,
+            username=user.username,
+            provider=user.provider,
+            is_verified=user.is_verified,
+            created_at=user.created_at,
+            last_login=user.last_login
+        )
+    
+    model_config = {
+        "from_attributes": True,
+        "json_schema_extra": {
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "email": "user@example.com",
@@ -79,6 +106,7 @@ class UserResponse(BaseModel):
                 "last_login": "2025-09-30T12:00:00Z"
             }
         }
+    }
 
 
 class AuthResponse(BaseModel):
@@ -88,8 +116,8 @@ class AuthResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "user": {
                     "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -105,6 +133,7 @@ class AuthResponse(BaseModel):
                 "token_type": "bearer"
             }
         }
+    }
 
 
 class RefreshTokenResponse(BaseModel):
@@ -118,7 +147,7 @@ class MessageResponse(BaseModel):
     message: str
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "message": "操作成功"
             }
@@ -139,8 +168,8 @@ class UserPreferenceResponse(BaseModel):
     custom_settings: dict
     
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "favorite_themes": ["美食", "自然", "文化"],
                 "travel_pace": "moderate",
@@ -155,8 +184,8 @@ class UserPreferenceResponse(BaseModel):
 class UpdatePreferenceRequest(BaseModel):
     """更新偏好請求"""
     favorite_themes: Optional[list] = None
-    travel_pace: Optional[str] = Field(None, regex="^(relaxed|moderate|packed)$")
-    budget_level: Optional[str] = Field(None, regex="^(budget|moderate|luxury)$")
+    travel_pace: Optional[str] = Field(None, pattern="^(relaxed|moderate|packed)$")
+    budget_level: Optional[str] = Field(None, pattern="^(budget|moderate|luxury)$")
     default_daily_start: Optional[str] = None
     default_daily_end: Optional[str] = None
     custom_settings: Optional[dict] = None

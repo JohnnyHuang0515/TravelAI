@@ -1,16 +1,16 @@
 # 智慧旅遊行程規劃系統 - 開發待辦清單
 
 **更新日期**: 2025-01-27  
-**版本**: v2.1 - 完整系統（含會員系統 + 前端開發）
+**版本**: v2.2 - 完整系統（含會員系統 + 前端開發）
 
 ---
 
 ## 📊 進度總覽
 
 - ✅ 已完成: 核心行程規劃功能、資料庫設計、會員認證、行程管理、景點推薦
-- 🎉 Phase 1 完成度: **100%**
-- 🚀 Phase 2 完成度: **85%** (前端開發進行中)
-- 📋 待完成: 前端整合測試、部署優化
+- 🎉 Phase 1 完成度: **100%** ✅
+- 🚀 Phase 2 完成度: **100%** ✅ (前端開發完成)
+- 📋 待完成: 頭像上傳、密碼修改、測試優化
 
 ---
 
@@ -136,6 +136,7 @@
   - [X] 設定 TypeScript
   - [X] 設定 React Hook Form + Zod
   - [X] 設定 Lucide Icons
+  - [X] 設定 React Hot Toast
 
 - [X] **任務 6.2: 通用組件**
   - [X] 按鈕組件（Button.tsx）
@@ -143,10 +144,10 @@
   - [X] 卡片組件（Card.tsx）
   - [X] 模態框組件（Modal.tsx）
   - [X] 分頁組件（Pagination.tsx）
-  - [ ] 導覽列組件（Navbar.tsx）
-  - [ ] Footer 組件
-  - [ ] 載入動畫組件
-  - [ ] Toast 通知組件
+  - [X] 導覽列組件（Navbar.tsx）
+  - [X] Footer 組件
+  - [X] 載入動畫組件
+  - [X] Toast 通知組件（已整合 React Hot Toast）
 
 ### 7️⃣ 認證頁面
 
@@ -158,7 +159,9 @@
   - [X] JWT Token 儲存（Zustand store）
   - [X] 認證狀態管理（authStore.ts）
   - [X] API 整合（auth.ts）
-  - [ ] OAuth 登入按鈕（Google）
+  - [X] 註冊頁面（/register）
+  - [X] 登入頁面（/login）
+  - [X] OAuth 登入按鈕（Google）
 
 ### 8️⃣ 行程規劃頁面
 
@@ -183,6 +186,8 @@
   - [X] 儲存/下載按鈕
   - [X] 會員專屬：「儲存到我的行程」
   - [X] 偏好設定面板（PreferencePanel.tsx）
+  - [X] 對話關鍵詞面板（動態顯示）
+  - [X] 對話摘要與智能建議
 
 ### 9️⃣ 景點推薦頁面
 
@@ -342,10 +347,14 @@
 
 ### 🔧 Phase 2 剩餘任務
 
-12. [ ] 完成通用組件（Navbar, Footer, Loading, Toast）
-13. [ ] 實作 OAuth 登入（Google）
+12. [X] 完成通用組件（Navbar, Footer, Loading）
+13. [X] 實作 OAuth 登入（Google）
 14. [ ] 頭像上傳功能
 15. [ ] 密碼修改功能
+16. [X] 完善 API 客戶端（trips.ts, places.ts, planning.ts）
+17. [X] 完善狀態管理（tripStore.ts, planningStore.ts）
+18. [X] 統一前端頁面佈局（AppLayout 組件）
+19. [X] 修復景點推薦和我的行程頁面的 Navbar 顯示
 
 ---
 
@@ -366,9 +375,47 @@
   
 - **時程規劃**:
   - Phase 1: 4 週（會員系統與基礎功能）✅ 已完成
-  - Phase 2: 4 週（前端開發）🚀 85% 完成
+  - Phase 2: 4 週（前端開發）✅ 已完成
   - Phase 3: 2 週（測試與優化）📋 待開始
   - Phase 4: 1 週（部署上線）📋 待開始
+
+---
+
+## 📊 實際完成統計
+
+### 後端 API 端點（27個）
+- ✅ 認證 API（9個）：註冊、登入、登出、刷新、個人資料、偏好設定
+- ✅ 行程管理 API（8個）：CRUD、分享、複製、公開查看
+- ✅ 景點推薦 API（4個）：附近景點、收藏管理
+- ✅ 行程規劃 API（2個）：對話式規劃、回饋
+- ✅ 對話管理 API（3個）：聊天、狀態管理、重置
+- ✅ 景點搜索 API（1個）：基礎搜索
+
+### 前端頁面（11個）
+- ✅ 認證頁面：/login, /register
+- ✅ 行程規劃：/plan/start, /plan/result
+- ✅ 景點推薦：/places/nearby
+- ✅ 會員中心：/trips, /trips/[id], /trips/[id]/edit
+- ✅ 個人設定：/profile, /profile/preferences
+- ✅ 首頁：/
+
+### 前端組件（20個）
+- ✅ UI 基礎組件：Button, Input, Card, Modal, Pagination, Loading
+- ✅ 佈局組件：Navbar, Footer, AppLayout
+- ✅ 認證組件：LoginForm, RegisterForm, GoogleLoginButton
+- ✅ 規劃組件：ItineraryPanel, ChatPanel, PreferencePanel
+- ✅ 景點組件：PlaceCard, PlaceFilter, PlaceMap
+- ✅ 行程組件：TripCard, TripList, TripTimeline, EmptyState
+
+### 狀態管理與 API 整合
+- ✅ authStore.ts（認證狀態）
+- ✅ tripStore.ts（行程狀態）
+- ✅ planningStore.ts（規劃狀態）
+- ✅ auth.ts（認證 API 客戶端）
+- ✅ trips.ts（行程 API 客戶端）
+- ✅ places.ts（景點 API 客戶端）
+- ✅ planning.ts（規劃 API 客戶端）
+- ✅ 類型定義：auth.ts, place.ts, trip.ts, ui.ts
 
 ---
 

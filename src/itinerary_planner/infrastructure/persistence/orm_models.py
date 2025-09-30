@@ -10,7 +10,8 @@ from sqlalchemy import (
     ForeignKey, Time, Text, Boolean, Date, BigInteger,
     CheckConstraint, UniqueConstraint
 )
-from sqlalchemy.dialects.postgresql import TIMESTAMPTZ, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import DateTime
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
 from pgvector.sqlalchemy import Vector
@@ -40,9 +41,9 @@ class Place(Base):
     photo_urls = Column(ARRAY(String))
     source = Column(String(50))
     source_id = Column(String(255))
-    metadata = Column(JSONB)
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMPTZ, default=datetime.utcnow, onupdate=datetime.utcnow)
+    place_metadata = Column(JSONB)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 關聯
     hours = relationship("Hour", back_populates="place", cascade="all, delete-orphan")
@@ -79,8 +80,8 @@ class Accommodation(Base):
     address = Column(Text)
     phone = Column(String)
     website = Column(String)
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMPTZ, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 關聯
     trip_days = relationship("TripDay", back_populates="accommodation")
@@ -100,9 +101,11 @@ class User(Base):
     password_hash = Column(String(255))  # bcrypt 雜湊
     provider = Column(String(50))  # 'email', 'google', 'facebook'
     provider_id = Column(String(255))  # OAuth provider ID
-    profile = Column(JSONB, default=dict)  # {avatar, phone, bio, ...}
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow)
-    last_login = Column(TIMESTAMPTZ)
+    google_id = Column(String(255), unique=True, index=True)  # Google OAuth ID
+    avatar_url = Column(String(500))  # 使用者頭像 URL
+    profile = Column(JSONB, default=dict)  # {phone, bio, ...}
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime)
     is_active = Column(Boolean, default=True, index=True)
     is_verified = Column(Boolean, default=False)  # Email 驗證狀態
     
@@ -135,8 +138,8 @@ class UserPreference(Base):
     default_daily_start = Column(Time, default='09:00')
     default_daily_end = Column(Time, default='18:00')
     custom_settings = Column(JSONB, default=dict)
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMPTZ, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 關聯
     user = relationship("User", back_populates="preferences")
@@ -168,8 +171,8 @@ class UserTrip(Base):
     is_public = Column(Boolean, default=False, index=True)
     share_token = Column(String(64), unique=True)  # 分享 Token
     view_count = Column(Integer, default=0)
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow, index=True)
-    updated_at = Column(TIMESTAMPTZ, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 關聯
     user = relationship("User", back_populates="trips")
@@ -193,7 +196,7 @@ class TripDay(Base):
     date = Column(Date, nullable=False, index=True)
     accommodation_id = Column(PG_UUID(as_uuid=True), ForeignKey("accommodations.id", ondelete="SET NULL"))
     notes = Column(Text)
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
     
     # 關聯
     trip = relationship("UserTrip", back_populates="days")
@@ -219,7 +222,7 @@ class TripVisit(Base):
     etd = Column(Time, nullable=False)  # Estimated Time of Departure
     travel_minutes = Column(Integer, default=0)  # 交通時間（分鐘）
     notes = Column(Text)
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
     
     # 關聯
     trip_day = relationship("TripDay", back_populates="visits")
@@ -240,7 +243,7 @@ class PlaceFavorite(Base):
     user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     place_id = Column(PG_UUID(as_uuid=True), ForeignKey("places.id", ondelete="CASCADE"), nullable=False, index=True)
     notes = Column(Text)
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     # 關聯
     user = relationship("User", back_populates="favorites")
@@ -266,9 +269,9 @@ class ConversationSession(Base):
     state_data = Column(JSONB, default=dict)  # LangGraph 狀態
     last_user_input = Column(Text)
     last_ai_response = Column(Text)
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow)
-    updated_at = Column(TIMESTAMPTZ, default=datetime.utcnow, onupdate=datetime.utcnow)
-    expires_at = Column(TIMESTAMPTZ, index=True)  # Session 過期時間
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    expires_at = Column(DateTime, index=True)  # Session 過期時間
     is_active = Column(Boolean, default=True)
     
     # 關聯
@@ -287,7 +290,7 @@ class FeedbackEvent(Base):
     op = Column(String(20))  # 'DROP', 'REPLACE', 'MOVE', 'ADD'
     feedback_text = Column(Text)  # 原始回饋文字
     reason = Column(Text)
-    created_at = Column(TIMESTAMPTZ, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     # 關聯
     user = relationship("User", back_populates="feedback_events")
