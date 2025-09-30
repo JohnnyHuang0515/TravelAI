@@ -1,341 +1,287 @@
-# 🗺️ 智慧旅遊行程規劃系統
+# 智慧旅遊行程規劃系統
 
-> AI 驅動的個性化旅遊行程規劃平台
-
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688.svg)](https://fastapi.tiangolo.com)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB.svg)](https://www.python.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791.svg)](https://www.postgresql.org)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
----
-
-## 📖 專案簡介
-
-智慧旅遊行程規劃系統是一個結合 **AI 對話技術**與**地理資訊系統**的旅遊規劃平台，為使用者提供：
-
-- 🤖 **AI 對話式規劃**: 自然語言輸入，智慧生成行程
-- 📍 **智慧景點推薦**: 基於位置、興趣的個性化推薦
-- 👤 **會員系統**: 行程儲存、分享、個人偏好管理
-- 🗺️ **路線優化**: 基於 OSRM 的交通時間計算與路徑優化
-
----
-
-## ✨ 核心功能
-
-### 1. 對話式行程規劃
-- AI 理解自然語言需求
-- 多輪對話收集資訊
-- 自動生成完整行程
-- 即時修改與優化
-
-### 2. 智慧景點推薦
-- 基於地理位置的附近景點
-- 考慮評分、距離、營業時間
-- 支援類別篩選
-- 會員個性化推薦
-
-### 3. 會員系統
-- Email + OAuth 註冊登入
-- 行程儲存與管理
-- 行程分享與複製
-- 景點收藏功能
-- 個人偏好設定
-
-### 4. 路徑優化
-- OSRM 精確交通時間
-- 貪婪演算法快速規劃
-- 2-opt 局部優化
-- 考慮營業時間與時間窗
-
----
-
-## 🏗️ 系統架構
-
-```
-前端 (React/Vue)
-      ↓
-API Gateway (FastAPI)
-      ↓
-┌─────────────┬─────────────┬─────────────┐
-│  認證模組   │  行程管理   │  景點推薦   │
-└─────────────┴─────────────┴─────────────┘
-      ↓
-┌─────────────────────────────────────────┐
-│       LangGraph AI 規劃引擎              │
-│  (對話管理 + 混合檢索 + 路徑優化)        │
-└─────────────────────────────────────────┘
-      ↓
-┌──────────┬─────────┬─────────┐
-│PostgreSQL│  Redis  │  OSRM   │
-│ +PostGIS │         │         │
-└──────────┴─────────┴─────────┘
-```
-
-詳細架構請參考: [系統架構設計文件](docs/系統架構設計文件.md)
-
----
+一個基於 AI 的智慧旅遊行程規劃系統，提供個人化行程推薦、景點探索和路線規劃功能。
 
 ## 🚀 快速開始
 
-### 方法一：Docker Compose（推薦）
+### 一鍵啟動（推薦）
 
 ```bash
-# 1. Clone 專案
-git clone <repo-url>
-cd 比賽資料
+# 克隆專案
+git clone <repository-url>
+cd TravelAI
 
-# 2. 設定環境變數
-cp .env.example .env  # 編輯 .env 設定 API Keys
+# 一鍵啟動所有服務
+./scripts/start.sh
+```
 
-# 3. 啟動所有服務
+### 手動啟動
+
+```bash
+# 啟動所有服務
 docker-compose up -d
 
-# 4. 執行資料庫 Migration
-python3 scripts/run_migration.py 001_create_user_system_tables
+# 查看服務狀態
+docker-compose ps
 
-# 5. 測試系統
-python3 scripts/test_complete_flow.py
+# 查看日誌
+docker-compose logs -f
 ```
 
-### 方法二：本地開發
+## 📋 系統需求
+
+- Docker 20.10+
+- Docker Compose 2.0+
+- 8GB+ RAM（推薦）
+- 10GB+ 磁碟空間
+
+## 🏗️ 系統架構
+
+### 後端服務
+- **FastAPI**: Python Web 框架
+- **PostgreSQL + PostGIS**: 地理空間資料庫
+- **Redis**: 快取和會話存儲
+- **OSRM**: 路線規劃引擎
+
+### 前端服務
+- **Next.js 14**: React 框架
+- **Tailwind CSS**: 樣式框架
+- **Zustand**: 狀態管理
+
+### AI 服務
+- **Google Gemini**: 行程規劃 AI
+- **LangChain**: AI 應用框架
+- **LangGraph**: AI 工作流程
+
+## 🔧 服務配置
+
+### 環境變數
+
+建立 `.env` 檔案：
+
+```env
+# 資料庫
+DATABASE_URL=postgresql://postgres:password@localhost:5432/itinerary_db
+REDIS_URL=redis://localhost:6379
+
+# AI 服務
+GOOGLE_API_KEY=your_google_api_key
+OPENAI_API_KEY=your_openai_api_key
+
+# OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+```
+
+### 服務端口
+
+| 服務 | 端口 | 描述 |
+|------|------|------|
+| API | 8000 | FastAPI 後端服務 |
+| 前端 | 3000 | Next.js 前端應用 |
+| 資料庫 | 5432 | PostgreSQL 資料庫 |
+| Redis | 6379 | Redis 快取 |
+| OSRM | 5000 | 路線規劃服務 |
+
+## 📊 資料庫初始化
+
+系統啟動時會自動：
+
+1. **等待資料庫啟動** - 確保 PostgreSQL 服務就緒
+2. **啟用 PostGIS 擴展** - 支援地理空間查詢
+3. **建立資料表** - 根據 ORM 模型建立所有表
+4. **執行遷移** - 執行資料庫結構更新
+
+### 手動初始化
 
 ```bash
-# 1. 啟動基礎服務
-docker-compose up -d postgres redis osrm-backend
+# 進入 API 容器
+docker-compose exec api bash
 
-# 2. 安裝 Python 依賴
-pip install -r requirements.txt
-
-# 3. 執行 Migration
-python3 scripts/run_migration.py 001_create_user_system_tables
-
-# 4. 啟動 API 服務
-python3 start_server.py
-
-# 5. 測試系統
-python3 scripts/test_complete_flow.py
+# 執行初始化腳本
+python3 scripts/init_database.py
 ```
 
-**API 服務將在**: http://localhost:8001  
-**API 文件**: http://localhost:8001/docs
+## 🗺️ OSRM 資料準備
 
-詳細說明: [快速啟動指南](docs/快速啟動指南.md)
+### 下載台灣地圖資料
 
----
-
-## 📊 API 端點
-
-### 認證 (9)
-```
-POST   /v1/auth/register              # 註冊
-POST   /v1/auth/login                 # 登入
-POST   /v1/auth/refresh               # 刷新 Token
-GET    /v1/auth/me                    # 取得使用者資料
-PUT    /v1/auth/me/preferences        # 設定偏好
+```bash
+# 執行 OSRM 資料處理腳本
+./process_osrm.sh
 ```
 
-### 行程管理 (8)
-```
-GET    /v1/trips                      # 我的行程列表
-POST   /v1/trips                      # 儲存行程
-GET    /v1/trips/{id}                 # 行程詳情
-PUT    /v1/trips/{id}                 # 更新行程
-DELETE /v1/trips/{id}                 # 刪除行程
-POST   /v1/trips/{id}/share           # 分享行程
-GET    /v1/trips/public/{token}       # 查看公開行程
-POST   /v1/trips/{id}/copy            # 複製行程
-```
+### 手動下載
 
-### 景點推薦 (4)
-```
-GET    /v1/places/nearby              # 附近景點
-GET    /v1/places/favorites           # 我的收藏
-POST   /v1/places/{id}/favorite       # 收藏景點
-DELETE /v1/places/{id}/favorite       # 取消收藏
-```
+1. 下載台灣 OpenStreetMap 資料
+2. 使用 OSRM 工具處理
+3. 將處理後的檔案放入 `data/osrm/` 目錄
 
-### 行程規劃 (2)
-```
-POST   /v1/itinerary/propose          # 生成行程
-POST   /v1/itinerary/feedback         # 修改行程
-```
+## 🔐 認證系統
 
-**完整 API 文件**: http://localhost:8001/docs
+### 支援的認證方式
 
----
+- **Email 註冊/登入**: 傳統帳號密碼
+- **Google OAuth**: Google 帳號登入
+- **JWT Token**: API 認證
 
-## 📁 專案結構
+### 設定 Google OAuth
 
-```
-比賽資料/
-├── src/itinerary_planner/          # 原始碼
-│   ├── domain/                     # 領域模型
-│   ├── application/                # 應用服務
-│   │   └── services/               # 業務邏輯
-│   ├── infrastructure/             # 基礎設施
-│   │   ├── persistence/            # ORM 模型
-│   │   ├── repositories/           # 資料存取
-│   │   └── clients/                # 外部服務客戶端
-│   └── api/                        # API 層
-│       └── v1/                     # API v1
-│           ├── endpoints/          # 路由端點
-│           ├── schemas/            # Pydantic 模型
-│           └── dependencies/       # 依賴注入
-│
-├── scripts/                        # 腳本工具
-│   ├── migrations/                 # 資料庫 Migration
-│   ├── run_migration.py            # Migration 工具
-│   ├── test_auth_api.py            # 認證 API 測試
-│   └── test_complete_flow.py       # 完整流程測試
-│
-├── docs/                           # 文件
-│   ├── 系統架構設計文件.md
-│   ├── 行程規劃邏輯文件.md
-│   ├── 快速啟動指南.md
-│   └── 認證API使用指南.md
-│
-├── data/                           # 資料檔案
-│   ├── osrm/                       # OSRM 路網資料
-│   └── tdx/                        # TDX 景點資料
-│
-├── docker-compose.yml              # Docker 編排
-├── Dockerfile                      # Docker 映像
-├── requirements.txt                # Python 依賴
-├── start_server.py                 # 啟動腳本
-└── TODO.md                         # 開發待辦清單
+1. 前往 [Google Cloud Console](https://console.cloud.google.com/)
+2. 建立 OAuth 2.0 憑證
+3. 設定授權重定向 URI
+4. 更新環境變數
+
+## 📱 前端開發
+
+### 啟動前端開發服務
+
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
----
+### 前端技術棧
 
-## 🛠️ 技術棧
-
-### 後端
-- **框架**: FastAPI 0.104
-- **資料庫**: PostgreSQL 14 + PostGIS
-- **快取**: Redis 7
-- **ORM**: SQLAlchemy 2.0
-- **認證**: JWT + bcrypt
-
-### AI & 規劃
-- **AI 框架**: LangGraph + LangChain
-- **LLM**: Google Gemini / OpenAI
-- **檢索**: 混合檢索（結構化 + 語義）
-- **演算法**: 貪婪 + 2-opt 優化
-
-### 地理與交通
-- **地理查詢**: PostGIS
-- **路網計算**: OSRM
-- **距離計算**: Haversine 公式
-
-### 前端（開發中）
-- **框架**: Next.js 14 + React 18
-- **樣式**: Tailwind CSS
-- **狀態管理**: Zustand
-- **表單**: React Hook Form + Zod
-- **UI 組件**: Headless UI
-
----
-
-## 📈 開發進度
-
-### ✅ Phase 1: 後端系統（已完成 100%）
-- ✅ 資料庫設計（8 張會員表）
-- ✅ 會員認證模組
-- ✅ 行程管理模組
-- ✅ 景點推薦模組
-- ✅ AI 行程規劃整合
-
-### 🔄 Phase 2: 前端開發（進行中）
-- [x] 前端專案設定（Next.js + Tailwind）
-- [x] 基礎 UI 組件庫
-- [x] 認證頁面（登入/註冊）
-- [x] 首頁與導航
-- [x] 行程規劃頁面（三欄式布局）
-- [ ] 景點推薦頁面
-- [ ] 會員中心
-- [ ] 行程管理頁面
-
-### 📋 Phase 3: 測試與優化
-- [ ] 單元測試
-- [ ] 整合測試
-- [ ] 效能優化
-- [ ] 安全性加固
-
-### 📋 Phase 4: 部署上線
-- [ ] CI/CD 設定
-- [ ] 生產環境配置
-- [ ] 監控與日誌
-- [ ] 文件完善
-
----
+- **Next.js 14**: App Router, Server Components
+- **TypeScript**: 類型安全
+- **Tailwind CSS**: 響應式設計
+- **React Hook Form**: 表單處理
+- **Zustand**: 狀態管理
+- **React Hot Toast**: 通知系統
 
 ## 🧪 測試
 
-### 執行測試
+### 後端測試
 
 ```bash
-# 認證功能測試
-python3 scripts/test_auth_api.py
+# 進入 API 容器
+docker-compose exec api bash
 
-# 完整流程測試（推薦）
-python3 scripts/test_complete_flow.py
+# 執行測試
+python -m pytest tests/
 ```
 
-### 測試涵蓋範圍
-- ✅ 使用者註冊與登入
-- ✅ 偏好設定
-- ✅ AI 行程規劃（會員個性化）
-- ✅ 行程儲存與管理
-- ✅ 行程分享與複製
-- ✅ 附近景點推薦
-- ✅ 景點收藏
+### 前端測試
 
----
+```bash
+cd frontend
+npm test
+```
 
-## 📚 文件
+## 📈 監控和日誌
 
-### 設計文件
-- [系統架構設計文件](docs/系統架構設計文件.md) - 完整系統設計
-- [行程規劃邏輯文件](docs/行程規劃邏輯文件.md) - AI 規劃邏輯
+### 查看服務日誌
 
-### 開發文件
-- [快速啟動指南](docs/快速啟動指南.md) - 5 分鐘啟動系統
-- [快速開始-資料庫設定](docs/快速開始-資料庫設定.md) - 資料庫設定
-- [認證 API 使用指南](docs/認證API使用指南.md) - API 使用說明
+```bash
+# 所有服務
+docker-compose logs -f
 
-### 進度文件
-- [TODO.md](TODO.md) - 開發待辦清單
-- [會員系統整合完成](docs/會員系統整合完成.md) - Phase 1 總結
+# 特定服務
+docker-compose logs -f api
+docker-compose logs -f postgres
+```
 
----
+### 健康檢查
 
-## 🤝 貢獻
+```bash
+# API 健康檢查
+curl http://localhost:8000/health
 
-歡迎提交 Issue 和 Pull Request！
+# 資料庫連接
+docker-compose exec postgres pg_isready -U postgres
+```
 
----
+## 🛠️ 開發指南
+
+### 專案結構
+
+```
+TravelAI/
+├── src/                    # 後端源碼
+│   └── itinerary_planner/
+│       ├── api/           # API 路由
+│       ├── core/          # 核心邏輯
+│       ├── infrastructure/ # 基礎設施
+│       └── main.py        # 應用入口
+├── frontend/              # 前端應用
+│   ├── src/
+│   │   ├── app/          # Next.js App Router
+│   │   ├── components/   # React 組件
+│   │   ├── lib/          # 工具函數
+│   │   └── stores/       # 狀態管理
+├── scripts/               # 工具腳本
+├── migrations/            # 資料庫遷移
+├── data/                  # 資料檔案
+└── docker-compose.yml     # 服務配置
+```
+
+### 新增功能
+
+1. **後端 API**: 在 `src/itinerary_planner/api/` 新增路由
+2. **資料庫模型**: 在 `src/itinerary_planner/infrastructure/persistence/` 定義模型
+3. **前端頁面**: 在 `frontend/src/app/` 新增頁面
+4. **組件**: 在 `frontend/src/components/` 新增組件
+
+### 資料庫遷移
+
+```bash
+# 建立遷移檔案
+touch migrations/007_new_feature.sql
+
+# 執行遷移
+python3 scripts/run_migration.py 007_new_feature.sql
+```
+
+## 🚀 部署
+
+### 生產環境
+
+```bash
+# 使用生產配置
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### 環境變數
+
+生產環境需要設定：
+
+- `DATABASE_URL`: 生產資料庫連接
+- `REDIS_URL`: 生產 Redis 連接
+- `GOOGLE_API_KEY`: AI 服務金鑰
+- `JWT_SECRET_KEY`: JWT 簽名密鑰
+
+## 🤝 貢獻指南
+
+1. Fork 專案
+2. 建立功能分支
+3. 提交變更
+4. 建立 Pull Request
 
 ## 📄 授權
 
 MIT License
 
+## 🆘 常見問題
+
+### Q: 資料庫連接失敗
+A: 檢查 PostgreSQL 服務是否正常啟動，確認環境變數設定正確。
+
+### Q: OSRM 服務無法啟動
+A: 確認 `data/osrm/` 目錄包含正確的 OSRM 資料檔案。
+
+### Q: 前端無法連接後端
+A: 檢查 CORS 設定和 API 服務狀態。
+
+### Q: Google OAuth 登入失敗
+A: 確認 Google Cloud Console 設定和重定向 URI 配置。
+
+## 📞 支援
+
+如有問題，請建立 Issue 或聯繫開發團隊。
+
 ---
 
-## 👨‍💻 開發團隊
-
-- **系統設計**: AI Assistant
-- **開發**: Johnny
-- **AI 技術**: Google Gemini / OpenAI
-
----
-
-## 🔗 相關連結
-
-- API 文件: http://localhost:8001/docs
-- 系統架構: [架構文件](docs/系統架構設計文件.md)
-- 開發進度: [TODO](TODO.md)
-
----
-
-**最後更新**: 2025-09-30  
-**版本**: v2.1 - Phase 2 前端開發中
+**智慧旅遊系統** - 讓 AI 為您的旅程增添智慧 ✈️

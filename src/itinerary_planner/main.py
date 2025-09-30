@@ -109,7 +109,7 @@ except Exception as e:
 # 註冊認證路由
 try:
     from .api.v1.endpoints import auth
-    app.include_router(auth.router, prefix="/v1", tags=["認證"])
+    app.include_router(auth.router, prefix="/v1/auth", tags=["認證"])
     logger.info("✅ 認證路由註冊成功")
 except Exception as e:
     logger.error(f"❌ 認證路由註冊失敗: {e}")

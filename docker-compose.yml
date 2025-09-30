@@ -1,6 +1,36 @@
 version: '3.8'
 
 services:
+  # PostgreSQL 資料庫
+  postgres:
+    image: postgis/postgis:15-3.3
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=itinerary_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d itinerary_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 資料庫初始化服務
+  db-init:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/itinerary_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["python3", "scripts/init_database.py"]
+    volumes:
+      - ./scripts:/app/scripts
+      - ./src:/app/src
+
   # API 服務 (我們的 FastAPI 應用)
   api:
     build: .
@@ -13,22 +43,10 @@ services:
       - REDIS_URL=redis://redis:6379
       - OSRM_HOST=http://osrm-backend:5000
     depends_on:
-      - postgres
+      - db-init
       - redis
       - osrm-backend
     command: ["uvicorn", "src.itinerary_planner.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-
-  # PostgreSQL 資料庫
-  postgres:
-    image: ankane/pgvector:v0.5.1
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=itinerary_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - /home/johnny/專案/比賽資料/postgres_data:/var/lib/postgresql/data/
 
   # Redis 快取
   redis:
@@ -42,6 +60,8 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./data/osrm:/data
-    command: osrm-routed /data/taiwan-250923.osrm
+      - ./data/osrm:/data:ro
+    command: osrm-routed --algorithm mld /data/taiwan-250923.osrm
 
+volumes:
+  postgres_data:
