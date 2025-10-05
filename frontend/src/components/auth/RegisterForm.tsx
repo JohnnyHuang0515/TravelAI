@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,7 +25,8 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const RegisterForm: React.FC = () => {
-  const { register: registerUser, isLoading } = useAuthStore();
+  const router = useRouter();
+  const { register: registerUser, isLoading, isAuthenticated } = useAuthStore();
 
   const {
     register,
@@ -34,11 +36,20 @@ export const RegisterForm: React.FC = () => {
     resolver: zodResolver(registerSchema),
   });
 
+  // 如果已經登入，跳轉到首頁
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
+
   const onSubmit = async (data: RegisterFormData) => {
     try {
       console.log("提交註冊表單:", data);
       await registerUser(data);
       console.log("註冊成功");
+      // 註冊成功後跳轉到首頁
+      router.push("/");
     } catch (error) {
       console.error("註冊表單錯誤:", error);
       // 錯誤已在 store 中處理

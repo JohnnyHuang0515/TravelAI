@@ -148,6 +148,72 @@ export function PlaceCard({
           </div>
         </div>
 
+        {/* 車程資訊 */}
+        {place.route_info && (
+          <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="text-xs font-medium text-blue-800 dark:text-blue-300 mb-1 flex items-center">
+              <span className="mr-1">🛣️</span>
+              車程資訊
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs text-blue-700 dark:text-blue-400">
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-1">
+                  <span className="mr-1">🏍️</span>
+                  <span className="font-medium">機車</span>
+                </div>
+                <div className="text-xs">
+                  <div>{place.route_info.motorcycle.formatted.distance}</div>
+                  <div>{place.route_info.motorcycle.formatted.duration}</div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-1">
+                  <span className="mr-1">🚗</span>
+                  <span className="font-medium">小客車</span>
+                </div>
+                <div className="text-xs">
+                  <div>{place.route_info.car.formatted.distance}</div>
+                  <div>{place.route_info.car.formatted.duration}</div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-1">
+                  <span className="mr-1">🚌</span>
+                  <span className="font-medium">大客車</span>
+                </div>
+                <div className="text-xs">
+                  <div>{place.route_info.bus.formatted.distance}</div>
+                  <div>{place.route_info.bus.formatted.duration}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 碳排放資訊 */}
+        {place.carbon_emission && (
+          <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+            <div className="text-xs font-medium text-green-800 dark:text-green-300 mb-1 flex items-center">
+              <span className="mr-1">🌱</span>
+              交通碳排放
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs text-green-700 dark:text-green-400">
+              <span className="flex items-center justify-center">
+                <span className="mr-1">🏍️</span>
+                機車: {place.carbon_emission.motorcycle.formatted}
+              </span>
+              <span className="flex items-center justify-center">
+                <span className="mr-1">🚗</span>
+                小客車: {place.carbon_emission.car.formatted}
+              </span>
+              <span className="flex items-center justify-center">
+                <span className="mr-1">🚌</span>
+                大客車: {place.carbon_emission.bus.formatted}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* 操作按鈕 */}
         <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
           <div className="flex space-x-2">

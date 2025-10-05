@@ -41,6 +41,8 @@ env.bak/
 venv.bak/
 .venv/
 
+# uv (uv.lock 需要提交到版本控制)
+
 # IDE
 .vscode/
 .idea/

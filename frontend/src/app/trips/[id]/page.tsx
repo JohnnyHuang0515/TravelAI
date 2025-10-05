@@ -6,7 +6,7 @@ import { TripTimeline } from "@/components/trip/TripTimeline";
 import { PlaceMap } from "@/components/place/PlaceMap";
 import { Modal } from "@/components/ui";
 import { Button } from "@/components/ui";
-// import { AppLayout } from "@/components/layout";
+import { AppLayout } from "@/components/layout";
 import { Trip } from "@/lib/types/trip";
 
 export default function TripDetailPage() {

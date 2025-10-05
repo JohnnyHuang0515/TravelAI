@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,8 +19,9 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export const LoginForm: React.FC = () => {
+  const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
-  const { login, isLoading } = useAuthStore();
+  const { login, isLoading, isAuthenticated } = useAuthStore();
 
   const {
     register,
@@ -29,9 +31,18 @@ export const LoginForm: React.FC = () => {
     resolver: zodResolver(loginSchema),
   });
 
+  // 如果已經登入，跳轉到首頁
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
+
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data);
+      // 登入成功後跳轉到首頁
+      router.push("/");
     } catch (error) {
       // 錯誤已在 store 中處理
     }

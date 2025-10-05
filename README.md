@@ -4,7 +4,21 @@
 
 ## 🚀 快速開始
 
-### 一鍵啟動（推薦）
+### 使用 uv 管理（推薦）
+
+```bash
+# 克隆專案
+git clone <repository-url>
+cd TravelAI
+
+# 使用 uv 同步依賴
+uv sync
+
+# 啟動服務
+uv run python start_server.py
+```
+
+### 一鍵啟動（Docker）
 
 ```bash
 # 克隆專案
@@ -30,6 +44,13 @@ docker-compose logs -f
 
 ## 📋 系統需求
 
+### 使用 uv 開發
+- uv (最新版本)
+- Python 3.10+
+- 8GB+ RAM（推薦）
+- 10GB+ 磁碟空間
+
+### Docker 部署
 - Docker 20.10+
 - Docker Compose 2.0+
 - 8GB+ RAM（推薦）
@@ -157,10 +178,11 @@ npm run dev
 ### 後端測試
 
 ```bash
-# 進入 API 容器
-docker-compose exec api bash
+# 使用 uv 執行測試
+uv run pytest tests/
 
-# 執行測試
+# 或進入 API 容器執行測試
+docker-compose exec api bash
 python -m pytest tests/
 ```
 
@@ -196,6 +218,38 @@ docker-compose exec postgres pg_isready -U postgres
 
 ## 🛠️ 開發指南
 
+### uv 專案管理
+
+本專案使用 uv 作為 Python 套件與環境管理工具：
+
+```bash
+# 安裝 uv（如果尚未安裝）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 同步依賴
+uv sync
+
+# 在虛擬環境中執行指令
+uv run python <script.py>
+uv run pytest tests/
+uv run ruff check src/
+
+# 新增依賴
+uv add <package-name>
+
+# 新增開發依賴
+uv add --dev <package-name>
+
+# 移除依賴
+uv remove <package-name>
+
+# 查看依賴樹
+uv tree
+
+# 產生鎖定檔
+uv lock
+```
+
 ### 專案結構
 
 ```
@@ -215,6 +269,9 @@ TravelAI/
 ├── scripts/               # 工具腳本
 ├── migrations/            # 資料庫遷移
 ├── data/                  # 資料檔案
+├── pyproject.toml         # Python 專案配置
+├── uv.lock               # 依賴鎖定檔
+├── .venv/                # 虛擬環境（不提交）
 └── docker-compose.yml     # 服務配置
 ```
 
