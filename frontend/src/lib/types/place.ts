@@ -26,6 +26,9 @@ export interface RouteInfo {
       distance: string;
       duration: string;
     };
+    alternatives?: any[]; // 替代路線
+    geometry?: string; // 路線幾何（GeoJSON）
+    isRealTime?: boolean; // 是否為即時計算
   };
   motorcycle: {
     distance: number;
@@ -36,6 +39,9 @@ export interface RouteInfo {
       distance: string;
       duration: string;
     };
+    alternatives?: any[];
+    geometry?: string;
+    isRealTime?: boolean;
   };
   bus: {
     distance: number;
@@ -46,6 +52,9 @@ export interface RouteInfo {
       distance: string;
       duration: string;
     };
+    alternatives?: any[];
+    geometry?: string;
+    isRealTime?: boolean;
   };
 }
 
@@ -62,6 +71,8 @@ export interface Place {
     lat: number;
     lon: number;
   };
+  latitude: number; // 添加經度屬性
+  longitude: number; // 添加緯度屬性
   photo_url?: string;
   is_favorite?: boolean;
   carbon_emission?: CarbonEmissionInfo;

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSRM 整合測試</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 OSRM 整合測試</h1>
+        
+        <div class="test-section">
+            <h3>1. OSRM 服務健康檢查</h3>
+            <button onclick="testOSRMHealth()">測試 OSRM 服務</button>
+            <div id="health-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. 路由計算測試</h3>
+            <button onclick="testRouteCalculation()">計算台北到宜蘭路線</button>
+            <div id="route-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. 替代路線測試</h3>
+            <button onclick="testAlternativeRoutes()">獲取替代路線</button>
+            <div id="alternatives-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. 前端整合測試</h3>
+            <button onclick="testFrontendIntegration()">測試前端整合</button>
+            <div id="frontend-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. 完整功能測試</h3>
+            <button onclick="runFullTest()">運行完整測試</button>
+            <div id="full-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const OSRM_BASE_URL = 'http://localhost:5001';
+        const FRONTEND_URL = 'http://localhost:3000';
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        async function testOSRMHealth() {
+            try {
+                showResult('health-result', '正在測試 OSRM 服務...', 'info');
+                
+                // 使用簡單的路由請求來檢查服務狀態（OSRM 5.22.0 沒有 /health 端點）
+                const response = await fetch(`${OSRM_BASE_URL}/route/v1/driving/121.5170,25.0478;121.5170,25.0478`);
+                const data = await response.json();
+                
+                if (response.ok && data.code === 'Ok') {
+                    showResult('health-result', `✅ OSRM 服務正常運行\n\n回應數據:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('health-result', `❌ OSRM 服務異常\n狀態碼: ${response.status}\n回應: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                showResult('health-result', `❌ 無法連接到 OSRM 服務\n錯誤: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRouteCalculation() {
+            try {
+                showResult('route-result', '正在計算台北到宜蘭路線...', 'info');
+                
+                // 台北車站到宜蘭車站
+                const coordinates = '121.5170,25.0478;121.7534,24.7548';
+                const response = await fetch(`${OSRM_BASE_URL}/route/v1/driving/${coordinates}?alternatives=true`);
+                const data = await response.json();
+                
+                if (response.ok && data.code === 'Ok') {
+                    const route = data.routes[0];
+                    const distanceKm = (route.distance / 1000).toFixed(2);
+                    const durationMin = (route.duration / 60).toFixed(1);
+                    
+                    showResult('route-result', 
+                        `✅ 路由計算成功\n\n` +
+                        `距離: ${distanceKm} km\n` +
+                        `時間: ${durationMin} 分鐘\n` +
+                        `替代路線: ${data.routes.length - 1} 條\n\n` +
+                        `詳細數據:\n${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('route-result', `❌ 路由計算失敗\n回應: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                showResult('route-result', `❌ 路由計算請求失敗\n錯誤: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAlternativeRoutes() {
+            try {
+                showResult('alternatives-result', '正在獲取替代路線...', 'info');
+                
+                const coordinates = '121.5170,25.0478;121.7534,24.7548';
+                const response = await fetch(`${OSRM_BASE_URL}/route/v1/driving/${coordinates}?alternatives=true&max_alternatives=3`);
+                const data = await response.json();
+                
+                if (response.ok && data.code === 'Ok') {
+                    let result = `✅ 替代路線獲取成功\n\n`;
+                    result += `總路線數: ${data.routes.length}\n\n`;
+                    
+                    data.routes.forEach((route, index) => {
+                        const distanceKm = (route.distance / 1000).toFixed(2);
+                        const durationMin = (route.duration / 60).toFixed(1);
+                        result += `路線 ${index + 1}:\n`;
+                        result += `  距離: ${distanceKm} km\n`;
+                        result += `  時間: ${durationMin} 分鐘\n`;
+                        result += `  幾何點數: ${route.geometry.coordinates.length}\n\n`;
+                    });
+                    
+                    showResult('alternatives-result', result, 'success');
+                } else {
+                    showResult('alternatives-result', `❌ 替代路線獲取失敗\n回應: ${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                showResult('alternatives-result', `❌ 替代路線請求失敗\n錯誤: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFrontendIntegration() {
+            try {
+                showResult('frontend-result', '正在測試前端整合...', 'info');
+                
+                // 測試前端頁面
+                const frontendResponse = await fetch(FRONTEND_URL);
+                
+                if (frontendResponse.ok) {
+                    let result = `✅ 前端服務正常運行\n\n`;
+                    
+                    // 測試前端是否能訪問 OSRM 服務（跨域測試）
+                    try {
+                        const testResponse = await fetch(`${OSRM_BASE_URL}/health`);
+                        if (testResponse.ok) {
+                            result += `✅ 前端可以訪問 OSRM 服務\n`;
+                        } else {
+                            result += `⚠️ 前端無法訪問 OSRM 服務 (狀態碼: ${testResponse.status})\n`;
+                        }
+                    } catch (corsError) {
+                        result += `⚠️ 跨域請求被阻止: ${corsError.message}\n`;
+                        result += `💡 這是正常的，前端會通過代理或直接調用 OSRM\n`;
+                    }
+                    
+                    result += `\n前端地址: ${FRONTEND_URL}\n`;
+                    result += `OSRM 地址: ${OSRM_BASE_URL}\n`;
+                    
+                    showResult('frontend-result', result, 'success');
+                } else {
+                    showResult('frontend-result', `❌ 前端服務異常\n狀態碼: ${frontendResponse.status}`, 'error');
+                }
+            } catch (error) {
+                showResult('frontend-result', `❌ 前端整合測試失敗\n錯誤: ${error.message}`, 'error');
+            }
+        }
+
+        async function runFullTest() {
+            showResult('full-result', '正在運行完整測試...', 'info');
+            
+            let results = [];
+            
+            // 1. 健康檢查
+            try {
+                const healthResponse = await fetch(`${OSRM_BASE_URL}/health`);
+                if (healthResponse.ok) {
+                    results.push('✅ OSRM 服務健康檢查通過');
+                } else {
+                    results.push('❌ OSRM 服務健康檢查失敗');
+                }
+            } catch (error) {
+                results.push('❌ OSRM 服務健康檢查失敗');
+            }
+            
+            // 2. 路由計算
+            try {
+                const coordinates = '121.5170,25.0478;121.7534,24.7548';
+                const routeResponse = await fetch(`${OSRM_BASE_URL}/route/v1/driving/${coordinates}`);
+                const routeData = await routeResponse.json();
+                
+                if (routeResponse.ok && routeData.code === 'Ok') {
+                    const distance = (routeData.routes[0].distance / 1000).toFixed(2);
+                    const duration = (routeData.routes[0].duration / 60).toFixed(1);
+                    results.push(`✅ 路由計算成功 (${distance}km, ${duration}分鐘)`);
+                } else {
+                    results.push('❌ 路由計算失敗');
+                }
+            } catch (error) {
+                results.push('❌ 路由計算失敗');
+            }
+            
+            // 3. 前端服務
+            try {
+                const frontendResponse = await fetch(FRONTEND_URL);
+                if (frontendResponse.ok) {
+                    results.push('✅ 前端服務正常運行');
+                } else {
+                    results.push('❌ 前端服務異常');
+                }
+            } catch (error) {
+                results.push('❌ 前端服務異常');
+            }
+            
+            // 4. 整合狀態
+            const passedTests = results.filter(r => r.startsWith('✅')).length;
+            const totalTests = results.length;
+            
+            let finalResult = `🎯 完整測試結果\n\n`;
+            finalResult += results.join('\n');
+            finalResult += `\n\n📊 總結: ${passedTests}/${totalTests} 項測試通過\n`;
+            
+            if (passedTests === totalTests) {
+                finalResult += `🎉 所有測試通過！OSRM 整合功能正常運行`;
+                showResult('full-result', finalResult, 'success');
+            } else {
+                finalResult += `⚠️ 部分測試失敗，請檢查相關服務`;
+                showResult('full-result', finalResult, 'error');
+            }
+        }
+
+        // 頁面載入時自動運行健康檢查
+        window.onload = function() {
+            testOSRMHealth();
+        };
+    </script>
+</body>
+</html>

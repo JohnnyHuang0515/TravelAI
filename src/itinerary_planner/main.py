@@ -22,6 +22,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 包含路由 API
+from .api.v1.routing import router as routing_router
+app.include_router(routing_router, prefix="/v1")
+
 # 健康檢查端點
 @app.get("/health")
 def health_check():
@@ -133,5 +137,15 @@ try:
     logger.info("✅ 景點推薦路由註冊成功")
 except Exception as e:
     logger.error(f"❌ 景點推薦路由註冊失敗: {e}")
+    import traceback
+    traceback.print_exc()
+
+# 註冊路由計算路由
+try:
+    from .api.v1.endpoints import routing
+    app.include_router(routing.router, prefix="/v1", tags=["路由計算"])
+    logger.info("✅ 路由計算路由註冊成功")
+except Exception as e:
+    logger.error(f"❌ 路由計算路由註冊失敗: {e}")
     import traceback
     traceback.print_exc()

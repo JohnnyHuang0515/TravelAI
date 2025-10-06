@@ -4,11 +4,14 @@ import { useState } from "react";
 import { Card } from "@/components/ui";
 import { Button } from "@/components/ui";
 import { Place } from "@/lib/types/place";
+import { RouteComparisonModal } from "./RouteComparisonModal";
+import { getAlternativeRoutesComparison } from "@/lib/utils/routeCalculation";
 
 interface PlaceCardProps {
   place: Place;
   distance?: number;
   isFavorite?: boolean;
+  userLocation?: { lat: number; lon: number };
   onFavorite?: () => void;
   onViewDetail?: () => void;
   onAddToTrip?: () => void;
@@ -18,11 +21,15 @@ export function PlaceCard({
   place, 
   distance, 
   isFavorite = false, 
+  userLocation,
   onFavorite, 
   onViewDetail, 
   onAddToTrip 
 }: PlaceCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [showRouteComparison, setShowRouteComparison] = useState(false);
+  const [routeComparisonData, setRouteComparisonData] = useState<any>(null);
+  const [loadingRoutes, setLoadingRoutes] = useState(false);
 
   const formatDistance = (meters?: number) => {
     if (!meters) return "距離未知";
@@ -33,6 +40,32 @@ export function PlaceCard({
   const formatPrice = (priceRange?: number | null) => {
     if (!priceRange) return "價格未知";
     return "$".repeat(priceRange);
+  };
+
+  const handleShowRouteComparison = async () => {
+    if (!userLocation) {
+      console.warn('用戶位置不可用，無法比較路線');
+      return;
+    }
+
+    setLoadingRoutes(true);
+    try {
+      const comparisonData = await getAlternativeRoutesComparison(
+        userLocation.lat,
+        userLocation.lon,
+        place.latitude,
+        place.longitude
+      );
+
+      if (comparisonData) {
+        setRouteComparisonData(comparisonData);
+        setShowRouteComparison(true);
+      }
+    } catch (error) {
+      console.error('獲取路線比較數據失敗:', error);
+    } finally {
+      setLoadingRoutes(false);
+    }
   };
 
   const getCategoryIcon = (categories: string[]) => {
@@ -151,9 +184,24 @@ export function PlaceCard({
         {/* 車程資訊 */}
         {place.route_info && (
           <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <div className="text-xs font-medium text-blue-800 dark:text-blue-300 mb-1 flex items-center">
-              <span className="mr-1">🛣️</span>
-              車程資訊
+            <div className="text-xs font-medium text-blue-800 dark:text-blue-300 mb-1 flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="mr-1">🛣️</span>
+                車程資訊
+                {place.route_info.car.isRealTime && (
+                  <span className="ml-2 px-1 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs">
+                    即時
+                  </span>
+                )}
+              </div>
+              {place.route_info.car.alternatives && place.route_info.car.alternatives.length > 0 && (
+                <button
+                  onClick={handleShowRouteComparison}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 underline"
+                >
+                  +{place.route_info.car.alternatives.length} 替代路線
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs text-blue-700 dark:text-blue-400">
               <div className="text-center">
@@ -249,6 +297,18 @@ export function PlaceCard({
           </button>
         </div>
       </div>
+
+      {/* 路線比較模態框 */}
+      {routeComparisonData && (
+        <RouteComparisonModal
+          isOpen={showRouteComparison}
+          onClose={() => setShowRouteComparison(false)}
+          routes={routeComparisonData.routes}
+          bestRoute={routeComparisonData.bestRoute}
+          summary={routeComparisonData.summary}
+          placeName={place.name}
+        />
+      )}
     </Card>
   );
 }

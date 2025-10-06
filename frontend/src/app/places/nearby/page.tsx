@@ -209,6 +209,8 @@ export default function NearbyPlacesPage() {
         
         return {
           ...place,
+          latitude: place.location.lat,
+          longitude: place.location.lon,
           distance_meters: distanceMeters,
           carbon_emission: carbonEmission,
           route_info: routeInfo
@@ -414,6 +416,7 @@ export default function NearbyPlacesPage() {
                       place={place}
                       distance={place.distance_meters}
                       isFavorite={place.is_favorite}
+                      userLocation={userLocation}
                       onFavorite={() => handleFavorite(place.id)}
                       onViewDetail={() => handleViewDetail(place.id)}
                       onAddToTrip={() => handleAddToTrip(place.id)}
