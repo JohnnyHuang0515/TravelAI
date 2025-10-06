@@ -55,7 +55,7 @@ export interface OSRMWaypoint {
 }
 
 // OSRM 服務配置
-const OSRM_BASE_URL = process.env.NEXT_PUBLIC_OSRM_URL || 'http://localhost:5001';
+const OSRM_BASE_URL = process.env.NEXT_PUBLIC_OSRM_URL || 'http://localhost:5000';
 
 class OSRMClient {
   private baseUrl: string;

@@ -73,9 +73,10 @@ export function PlaceMap({
     // 創建地圖
     const map = (window as any).L.map(mapId).setView(center, zoom);
 
-    // 添加地圖圖層
+    // 添加地圖圖層 - 使用更準確的圖層
     (window as any).L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
     }).addTo(map);
 
     // 添加用戶位置標記

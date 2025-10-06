@@ -19,7 +19,7 @@ dependencies = [
     "sqlalchemy==2.0.23",
     "alembic==1.12.1",
     "psycopg2-binary==2.9.9",
-    "geoalchemy2==0.14.2",
+    "geoalchemy2[shapely]==0.14.2",
     "pgvector==0.2.3",
     # Redis
     "redis==5.0.1",
@@ -40,6 +40,7 @@ dependencies = [
     "pydantic-settings==2.1.0",
     "flask>=3.1.2",
     "flask-cors>=6.0.1",
+    "shapely>=2.1.2",
 ]
 
 [project.optional-dependencies]

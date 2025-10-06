@@ -33,8 +33,8 @@ export function useGeolocation() {
 
     const options: PositionOptions = {
       enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 300000 // 5 minutes
+      timeout: 30000, // 增加超時時間到30秒
+      maximumAge: 0 // 強制重新獲取位置
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -76,7 +76,7 @@ export function useGeolocation() {
 
     const options: PositionOptions = {
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: 30000, // 增加超時時間到30秒
       maximumAge: 0 // 強制重新獲取
     };
 
