@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後端前端 OSRM 整合測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        .button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .route-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .route-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .route-card h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        .route-detail {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-healthy { background-color: #27ae60; }
+        .status-error { background-color: #e74c3c; }
+        .status-warning { background-color: #f39c12; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 後端前端 OSRM 整合測試</h1>
+        
+        <div class="test-section">
+            <h2>📊 服務狀態檢查</h2>
+            <button class="button" onclick="checkAllServices()">檢查所有服務</button>
+            <div id="service-status" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🗺️ 路由計算測試</h2>
+            <p>測試台北車站到宜蘭車站的路線計算</p>
+            <button class="button" onclick="testRouteCalculation()">測試路由計算</button>
+            <button class="button" onclick="testMultipleVehicles()">測試多種交通工具</button>
+            <button class="button" onclick="testTrafficConditions()">測試交通狀況影響</button>
+            <div id="route-result" class="result" style="display: none;"></div>
+            <div id="route-info" class="route-info" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔄 替代路線測試</h2>
+            <p>測試替代路線比較功能</p>
+            <button class="button" onclick="testAlternativeRoutes()">測試替代路線</button>
+            <div id="alternative-result" class="result" style="display: none;"></div>
+            <div id="alternative-info" class="route-info" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>⚡ 批量請求測試</h2>
+            <p>測試批量路由計算功能</p>
+            <button class="button" onclick="testBatchRequests()">測試批量請求</button>
+            <div id="batch-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8001';
+        const OSRM_URL = 'http://localhost:5001';
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        function showRouteCards(containerId, routes, title = '路線資訊') {
+            const container = document.getElementById(containerId);
+            if (!routes || routes.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.innerHTML = '';
+            routes.forEach((route, index) => {
+                const card = document.createElement('div');
+                card.className = 'route-card';
+                card.innerHTML = `
+                    <h4>${title} ${index + 1}</h4>
+                    <div class="route-detail">距離: ${(route.distance / 1000).toFixed(2)} km</div>
+                    <div class="route-detail">時間: ${(route.duration / 60).toFixed(1)} 分鐘</div>
+                    <div class="route-detail">路線類型: ${route.weight_name || 'N/A'}</div>
+                `;
+                container.appendChild(card);
+            });
+            container.style.display = 'grid';
+        }
+
+        async function checkAllServices() {
+            showResult('service-status', '正在檢查服務狀態...', 'loading');
+            
+            const services = [
+                { name: '後端服務', url: `${BACKEND_URL}/health` },
+                { name: '後端路由 API', url: `${BACKEND_URL}/v1/routing/health` },
+                { name: 'OSRM 服務', url: `${OSRM_URL}/route/v1/driving/121.5170,25.0478;121.5170,25.0478` }
+            ];
+
+            let statusText = '服務狀態檢查結果:\n\n';
+            let allHealthy = true;
+
+            for (const service of services) {
+                try {
+                    const response = await fetch(service.url);
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        statusText += `✅ ${service.name}: 正常運行\n`;
+                        if (service.name === '後端路由 API' && data.osrm_service) {
+                            statusText += `   OSRM 服務狀態: ${data.osrm_service}\n`;
+                        }
+                    } else {
+                        statusText += `❌ ${service.name}: 回應異常 (${response.status})\n`;
+                        allHealthy = false;
+                    }
+                } catch (error) {
+                    statusText += `❌ ${service.name}: 連接失敗 (${error.message})\n`;
+                    allHealthy = false;
+                }
+            }
+
+            statusText += `\n總體狀態: ${allHealthy ? '✅ 所有服務正常' : '❌ 部分服務異常'}`;
+            showResult('service-status', statusText, allHealthy ? 'success' : 'error');
+        }
+
+        async function testRouteCalculation() {
+            showResult('route-result', '正在計算路由...', 'loading');
+            
+            try {
+                const url = `${BACKEND_URL}/v1/routing/calculate`;
+                const params = new URLSearchParams({
+                    start_lat: '25.0478',
+                    start_lon: '121.5170',
+                    end_lat: '24.7548',
+                    end_lon: '121.7534',
+                    vehicle_type: 'car',
+                    route_preference: 'fastest',
+                    traffic_conditions: 'normal',
+                    alternatives: 'true'
+                });
+
+                const response = await fetch(`${url}?${params}`);
+                const data = await response.json();
+
+                if (response.ok && data.code === 'Ok') {
+                    const mainRoute = data.routes[0];
+                    const alternatives = data.routes.slice(1);
+                    
+                    let resultText = `✅ 路由計算成功\n\n`;
+                    resultText += `主要路線:\n`;
+                    resultText += `距離: ${(mainRoute.distance / 1000).toFixed(2)} km\n`;
+                    resultText += `時間: ${(mainRoute.duration / 60).toFixed(1)} 分鐘\n`;
+                    resultText += `替代路線: ${alternatives.length} 條\n\n`;
+                    resultText += `回應數據:\n${JSON.stringify(data, null, 2)}`;
+                    
+                    showResult('route-result', resultText, 'success');
+                    showRouteCards('route-info', data.routes, '路線');
+                } else {
+                    showResult('route-result', `❌ 路由計算失敗: ${data.code || 'Unknown error'}\n${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                showResult('route-result', `❌ 路由計算請求失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMultipleVehicles() {
+            showResult('route-result', '正在測試多種交通工具...', 'loading');
+            
+            const vehicles = ['car', 'motorcycle', 'bus'];
+            const results = [];
+
+            try {
+                for (const vehicle of vehicles) {
+                    const url = `${BACKEND_URL}/v1/routing/calculate`;
+                    const params = new URLSearchParams({
+                        start_lat: '25.0478',
+                        start_lon: '121.5170',
+                        end_lat: '24.7548',
+                        end_lon: '121.7534',
+                        vehicle_type: vehicle,
+                        route_preference: 'fastest',
+                        traffic_conditions: 'normal',
+                        alternatives: 'false'
+                    });
+
+                    const response = await fetch(`${url}?${params}`);
+                    const data = await response.json();
+
+                    if (response.ok && data.code === 'Ok') {
+                        results.push({
+                            vehicle: vehicle,
+                            route: data.routes[0]
+                        });
+                    }
+                }
+
+                let resultText = `✅ 多種交通工具測試成功\n\n`;
+                results.forEach(result => {
+                    const route = result.route;
+                    resultText += `${result.vehicle}: ${(route.distance / 1000).toFixed(2)} km, ${(route.duration / 60).toFixed(1)} 分鐘\n`;
+                });
+
+                showResult('route-result', resultText, 'success');
+                showRouteCards('route-info', results.map(r => r.route), '交通工具');
+            } catch (error) {
+                showResult('route-result', `❌ 多種交通工具測試失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function testTrafficConditions() {
+            showResult('route-result', '正在測試交通狀況影響...', 'loading');
+            
+            const conditions = ['light', 'normal', 'heavy'];
+            const results = [];
+
+            try {
+                for (const condition of conditions) {
+                    const url = `${BACKEND_URL}/v1/routing/calculate`;
+                    const params = new URLSearchParams({
+                        start_lat: '25.0478',
+                        start_lon: '121.5170',
+                        end_lat: '24.7548',
+                        end_lon: '121.7534',
+                        vehicle_type: 'car',
+                        route_preference: 'fastest',
+                        traffic_conditions: condition,
+                        alternatives: 'false'
+                    });
+
+                    const response = await fetch(`${url}?${params}`);
+                    const data = await response.json();
+
+                    if (response.ok && data.code === 'Ok') {
+                        results.push({
+                            condition: condition,
+                            route: data.routes[0]
+                        });
+                    }
+                }
+
+                let resultText = `✅ 交通狀況影響測試成功\n\n`;
+                results.forEach(result => {
+                    const route = result.route;
+                    resultText += `${result.condition}: ${(route.distance / 1000).toFixed(2)} km, ${(route.duration / 60).toFixed(1)} 分鐘\n`;
+                });
+
+                showResult('route-result', resultText, 'success');
+                showRouteCards('route-info', results.map(r => r.route), '交通狀況');
+            } catch (error) {
+                showResult('route-result', `❌ 交通狀況影響測試失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAlternativeRoutes() {
+            showResult('alternative-result', '正在測試替代路線...', 'loading');
+            
+            try {
+                const url = `${BACKEND_URL}/v1/routing/calculate`;
+                const params = new URLSearchParams({
+                    start_lat: '25.0478',
+                    start_lon: '121.5170',
+                    end_lat: '24.7548',
+                    end_lon: '121.7534',
+                    vehicle_type: 'car',
+                    route_preference: 'fastest',
+                    traffic_conditions: 'normal',
+                    alternatives: 'true'
+                });
+
+                const response = await fetch(`${url}?${params}`);
+                const data = await response.json();
+
+                if (response.ok && data.code === 'Ok') {
+                    const routes = data.routes;
+                    
+                    let resultText = `✅ 替代路線測試成功\n\n`;
+                    resultText += `總共 ${routes.length} 條路線:\n\n`;
+                    
+                    routes.forEach((route, index) => {
+                        resultText += `路線 ${index + 1}:\n`;
+                        resultText += `  距離: ${(route.distance / 1000).toFixed(2)} km\n`;
+                        resultText += `  時間: ${(route.duration / 60).toFixed(1)} 分鐘\n`;
+                        resultText += `  類型: ${route.weight_name}\n\n`;
+                    });
+
+                    // 找出最快和最短路線
+                    const fastest = routes.reduce((fast, current) => 
+                        current.duration < fast.duration ? current : fast
+                    );
+                    const shortest = routes.reduce((short, current) => 
+                        current.distance < short.distance ? current : short
+                    );
+
+                    resultText += `最快路線: ${(fastest.duration / 60).toFixed(1)} 分鐘\n`;
+                    resultText += `最短路線: ${(shortest.distance / 1000).toFixed(2)} km\n`;
+
+                    showResult('alternative-result', resultText, 'success');
+                    showRouteCards('alternative-info', routes, '替代路線');
+                } else {
+                    showResult('alternative-result', `❌ 替代路線測試失敗: ${data.code || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult('alternative-result', `❌ 替代路線測試失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function testBatchRequests() {
+            showResult('batch-result', '正在測試批量請求...', 'loading');
+            
+            try {
+                const url = `${BACKEND_URL}/v1/routing/batch`;
+                const payload = {
+                    requests: [
+                        {
+                            start: { lat: 25.0478, lon: 121.5170 },
+                            end: { lat: 24.7548, lon: 121.7534 },
+                            vehicle_type: 'car'
+                        },
+                        {
+                            start: { lat: 25.0478, lon: 121.5170 },
+                            end: { lat: 24.7548, lon: 121.7534 },
+                            vehicle_type: 'motorcycle'
+                        },
+                        {
+                            start: { lat: 25.0478, lon: 121.5170 },
+                            end: { lat: 24.7548, lon: 121.7534 },
+                            vehicle_type: 'bus'
+                        }
+                    ]
+                };
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    let resultText = `✅ 批量請求測試成功\n\n`;
+                    resultText += `總請求數: ${data.total}\n`;
+                    resultText += `成功請求數: ${data.successful}\n\n`;
+                    
+                    data.results.forEach((result, index) => {
+                        if (result.success) {
+                            const route = result.result.routes[0];
+                            resultText += `請求 ${index + 1}: ${(route.distance / 1000).toFixed(2)} km, ${(route.duration / 60).toFixed(1)} 分鐘\n`;
+                        } else {
+                            resultText += `請求 ${index + 1}: 失敗 - ${result.error}\n`;
+                        }
+                    });
+
+                    showResult('batch-result', resultText, 'success');
+                } else {
+                    showResult('batch-result', `❌ 批量請求測試失敗: ${response.status}\n${JSON.stringify(data)}`, 'error');
+                }
+            } catch (error) {
+                showResult('batch-result', `❌ 批量請求測試失敗: ${error.message}`, 'error');
+            }
+        }
+
+        // 頁面載入時自動檢查服務狀態
+        window.onload = function() {
+            checkAllServices();
+        };
+    </script>
+</body>
+</html>

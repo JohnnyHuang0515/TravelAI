@@ -1,5 +1,10 @@
 // 車程計算工具
-// 整合 OSRM 路由服務來計算實際的車程距離和時間
+// 整合後端 OSRM 路由服務來計算實際的車程距離和時間
+
+import { routingAPI } from '../api/routing';
+import { osrmClient, OSRMRoute } from '../services/osrmClient';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
 export interface RouteInfo {
   distance: number; // 實際車程距離（米）
@@ -10,6 +15,9 @@ export interface RouteInfo {
     distance: string;
     duration: string;
   };
+  alternatives?: OSRMRoute[]; // 替代路線
+  geometry?: string; // 路線幾何（GeoJSON）
+  isRealTime?: boolean; // 是否為即時計算
 }
 
 export interface RouteCalculationOptions {
@@ -159,7 +167,7 @@ function formatDuration(minutes: number): string {
   }
 }
 
-// 使用 OSRM API 計算實際車程（需要後端 API 支援）
+// 使用後端 OSRM 服務計算實際車程
 export async function calculateOSRMRoute(
   startLat: number,
   startLon: number,
@@ -172,40 +180,100 @@ export async function calculateOSRMRoute(
   }
 ): Promise<RouteInfo | null> {
   try {
-    // 構建 API 請求
-    const params = new URLSearchParams({
-      start_lat: startLat.toString(),
-      start_lon: startLon.toString(),
-      end_lat: endLat.toString(),
-      end_lon: endLon.toString(),
-      vehicle_type: options.vehicleType,
-      route_preference: options.routePreference,
-      traffic_conditions: options.trafficConditions
-    });
-    
-    const response = await fetch(`/api/v1/routing/calculate?${params}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    return {
-      distance: data.distance,
-      duration: data.duration,
-      distanceKm: data.distance / 1000,
-      durationMinutes: data.duration / 60,
-      formatted: {
-        distance: formatDistance(data.distance),
-        duration: formatDuration(data.duration / 60)
+    // 首先嘗試使用後端 API
+    try {
+      const result = await routingAPI.calculateRouteSimple(
+        startLat, startLon, endLat, endLon, {
+          vehicle_type: options.vehicleType,
+          route_preference: options.routePreference,
+          traffic_conditions: options.trafficConditions,
+          alternatives: true
+        }
+      );
+
+      if (result && result.routes && result.routes.length > 0) {
+        const mainRoute = result.routes[0];
+        const alternatives = result.routes.slice(1);
+
+        return {
+          distance: mainRoute.distance,
+          duration: mainRoute.duration,
+          distanceKm: mainRoute.distance / 1000,
+          durationMinutes: mainRoute.duration / 60,
+          formatted: {
+            distance: formatDistance(mainRoute.distance),
+            duration: formatDuration(mainRoute.duration / 60)
+          },
+          alternatives: alternatives,
+          geometry: mainRoute.geometry,
+          isRealTime: true
+        };
       }
+    } catch (apiError) {
+      console.warn('後端 API 不可用，嘗試直接 OSRM 服務:', apiError);
+    }
+
+    // 回退到直接 OSRM 服務
+    const isHealthy = await osrmClient.checkHealth();
+    if (!isHealthy) {
+      console.warn('OSRM 服務不可用，使用估算方法');
+      return estimateRouteDistance(startLat, startLon, endLat, endLon, options);
+    }
+
+    // 選擇合適的 OSRM 配置文件
+    const profile = getOSRMProfile(options.vehicleType, options.trafficConditions);
+    
+    // 獲取主要路線
+    const routeResponse = await osrmClient.getRoute(
+      startLat, startLon, endLat, endLon,
+      {
+        profile,
+        alternatives: true,
+        steps: false
+      }
+    );
+
+    if (!routeResponse || !routeResponse.routes.length) {
+      console.warn('OSRM 無法計算路線，使用估算方法');
+      return estimateRouteDistance(startLat, startLon, endLat, endLon, options);
+    }
+
+    const mainRoute = routeResponse.routes[0];
+    const alternatives = routeResponse.routes.slice(1);
+
+    // 根據交通狀況調整時間
+    const trafficFactor = TRAFFIC_CONDITIONS_FACTORS[options.trafficConditions];
+    const adjustedDuration = Math.round(mainRoute.duration * trafficFactor);
+
+    return {
+      distance: mainRoute.distance,
+      duration: adjustedDuration,
+      distanceKm: mainRoute.distance / 1000,
+      durationMinutes: adjustedDuration / 60,
+      formatted: {
+        distance: formatDistance(mainRoute.distance),
+        duration: formatDuration(adjustedDuration / 60)
+      },
+      alternatives: alternatives,
+      geometry: mainRoute.geometry,
+      isRealTime: true
     };
   } catch (error) {
-    console.warn('OSRM API 不可用，使用估算方法:', error);
-    // 如果 OSRM API 不可用，回退到估算方法
+    console.warn('OSRM 計算失敗，使用估算方法:', error);
     return estimateRouteDistance(startLat, startLon, endLat, endLon, options);
   }
+}
+
+// 根據交通工具和交通狀況選擇 OSRM 配置文件
+function getOSRMProfile(
+  vehicleType: 'car' | 'motorcycle' | 'bus',
+  trafficConditions: 'normal' | 'heavy' | 'light'
+): 'driving' | 'driving-traffic' {
+  // 如果有交通數據且為小客車，使用 traffic 配置
+  if (vehicleType === 'car' && trafficConditions !== 'light') {
+    return 'driving-traffic';
+  }
+  return 'driving';
 }
 
 // 計算多種交通工具的車程比較
@@ -220,40 +288,95 @@ export async function calculateMultipleVehicleRoutes(
   motorcycle: RouteInfo;
   bus: RouteInfo;
 }> {
-  const [carRoute, motorcycleRoute, busRoute] = await Promise.all([
-    calculateOSRMRoute(startLat, startLon, endLat, endLon, {
-      vehicleType: 'car',
-      routePreference: 'fastest',
-      trafficConditions
-    }),
-    calculateOSRMRoute(startLat, startLon, endLat, endLon, {
-      vehicleType: 'motorcycle',
-      routePreference: 'fastest',
-      trafficConditions
-    }),
-    calculateOSRMRoute(startLat, startLon, endLat, endLon, {
-      vehicleType: 'bus',
-      routePreference: 'fastest',
-      trafficConditions
-    })
-  ]);
-  
+  try {
+    // 首先嘗試使用後端批量 API
+    try {
+      const result = await routingAPI.calculateMultipleVehicleRoutes(
+        startLat, startLon, endLat, endLon, trafficConditions
+      );
+
+      return {
+        car: convertToRouteInfo(result.car.routes[0], result.car.routes.slice(1)),
+        motorcycle: convertToRouteInfo(result.motorcycle.routes[0], result.motorcycle.routes.slice(1)),
+        bus: convertToRouteInfo(result.bus.routes[0], result.bus.routes.slice(1))
+      };
+    } catch (apiError) {
+      console.warn('後端批量 API 不可用，使用單個請求:', apiError);
+    }
+
+    // 回退到單個請求
+    const [carRoute, motorcycleRoute, busRoute] = await Promise.all([
+      calculateOSRMRoute(startLat, startLon, endLat, endLon, {
+        vehicleType: 'car',
+        routePreference: 'fastest',
+        trafficConditions
+      }),
+      calculateOSRMRoute(startLat, startLon, endLat, endLon, {
+        vehicleType: 'motorcycle',
+        routePreference: 'fastest',
+        trafficConditions
+      }),
+      calculateOSRMRoute(startLat, startLon, endLat, endLon, {
+        vehicleType: 'bus',
+        routePreference: 'fastest',
+        trafficConditions
+      })
+    ]);
+    
+    return {
+      car: carRoute || estimateRouteDistance(startLat, startLon, endLat, endLon, {
+        vehicleType: 'car',
+        routePreference: 'fastest',
+        trafficConditions
+      }),
+      motorcycle: motorcycleRoute || estimateRouteDistance(startLat, startLon, endLat, endLon, {
+        vehicleType: 'motorcycle',
+        routePreference: 'fastest',
+        trafficConditions
+      }),
+      bus: busRoute || estimateRouteDistance(startLat, startLon, endLat, endLon, {
+        vehicleType: 'bus',
+        routePreference: 'fastest',
+        trafficConditions
+      })
+    };
+  } catch (error) {
+    console.error('多交通工具路由計算失敗:', error);
+    // 返回估算結果
+    return {
+      car: estimateRouteDistance(startLat, startLon, endLat, endLon, {
+        vehicleType: 'car',
+        routePreference: 'fastest',
+        trafficConditions
+      }),
+      motorcycle: estimateRouteDistance(startLat, startLon, endLat, endLon, {
+        vehicleType: 'motorcycle',
+        routePreference: 'fastest',
+        trafficConditions
+      }),
+      bus: estimateRouteDistance(startLat, startLon, endLat, endLon, {
+        vehicleType: 'bus',
+        routePreference: 'fastest',
+        trafficConditions
+      })
+    };
+  }
+}
+
+// 輔助函數：轉換後端 API 回應為 RouteInfo
+function convertToRouteInfo(mainRoute: any, alternatives: any[]): RouteInfo {
   return {
-    car: carRoute || estimateRouteDistance(startLat, startLon, endLat, endLon, {
-      vehicleType: 'car',
-      routePreference: 'fastest',
-      trafficConditions
-    }),
-    motorcycle: motorcycleRoute || estimateRouteDistance(startLat, startLon, endLat, endLon, {
-      vehicleType: 'motorcycle',
-      routePreference: 'fastest',
-      trafficConditions
-    }),
-    bus: busRoute || estimateRouteDistance(startLat, startLon, endLat, endLon, {
-      vehicleType: 'bus',
-      routePreference: 'fastest',
-      trafficConditions
-    })
+    distance: mainRoute.distance,
+    duration: mainRoute.duration,
+    distanceKm: mainRoute.distance / 1000,
+    durationMinutes: mainRoute.duration / 60,
+    formatted: {
+      distance: formatDistance(mainRoute.distance),
+      duration: formatDuration(mainRoute.duration / 60)
+    },
+    alternatives: alternatives,
+    geometry: mainRoute.geometry,
+    isRealTime: true
   };
 }
 
@@ -268,5 +391,134 @@ export function getTrafficConditionSuggestion(): 'light' | 'normal' | 'heavy' {
     return 'normal'; // 一般時間
   } else {
     return 'light'; // 深夜或清晨
+  }
+}
+
+// 獲取多條替代路線的詳細比較
+export async function getAlternativeRoutesComparison(
+  startLat: number,
+  startLon: number,
+  endLat: number,
+  endLon: number,
+  options: RouteCalculationOptions = {
+    vehicleType: 'car',
+    routePreference: 'fastest',
+    trafficConditions: 'normal'
+  }
+): Promise<{
+  routes: RouteInfo[];
+  bestRoute: RouteInfo;
+  summary: {
+    fastest: RouteInfo;
+    shortest: RouteInfo;
+    balanced: RouteInfo;
+  };
+} | null> {
+  try {
+    // 檢查 OSRM 服務狀態
+    const isHealthy = await osrmClient.checkHealth();
+    if (!isHealthy) {
+      console.warn('OSRM 服務不可用');
+      return null;
+    }
+
+    const profile = getOSRMProfile(options.vehicleType, options.trafficConditions);
+    
+    // 獲取多條替代路線
+    const alternativeRoutes = await osrmClient.getAlternativeRoutes(
+      startLat, startLon, endLat, endLon,
+      {
+        profile,
+        maxAlternatives: 5
+      }
+    );
+
+    if (!alternativeRoutes || alternativeRoutes.length === 0) {
+      return null;
+    }
+
+    // 轉換為 RouteInfo 格式
+    const routes: RouteInfo[] = alternativeRoutes.map((route, index) => {
+      const trafficFactor = TRAFFIC_CONDITIONS_FACTORS[options.trafficConditions];
+      const adjustedDuration = Math.round(route.duration * trafficFactor);
+
+      return {
+        distance: route.distance,
+        duration: adjustedDuration,
+        distanceKm: route.distance / 1000,
+        durationMinutes: adjustedDuration / 60,
+        formatted: {
+          distance: formatDistance(route.distance),
+          duration: formatDuration(adjustedDuration / 60)
+        },
+        geometry: route.geometry,
+        isRealTime: true
+      };
+    });
+
+    // 找出最佳路線
+    const bestRoute = routes.reduce((best, current) => {
+      if (options.routePreference === 'fastest') {
+        return current.duration < best.duration ? current : best;
+      } else if (options.routePreference === 'shortest') {
+        return current.distance < best.distance ? current : best;
+      } else {
+        // balanced: 考慮時間和距離的平衡
+        const bestScore = best.duration / 60 + best.distance / 1000 * 0.1;
+        const currentScore = current.duration / 60 + current.distance / 1000 * 0.1;
+        return currentScore < bestScore ? current : best;
+      }
+    });
+
+    // 分類路線
+    const summary = {
+      fastest: routes.reduce((fastest, current) => 
+        current.duration < fastest.duration ? current : fastest
+      ),
+      shortest: routes.reduce((shortest, current) => 
+        current.distance < shortest.distance ? current : shortest
+      ),
+      balanced: bestRoute
+    };
+
+    return {
+      routes,
+      bestRoute,
+      summary
+    };
+  } catch (error) {
+    console.error('獲取替代路線比較失敗:', error);
+    return null;
+  }
+}
+
+// 計算等時線（可到達範圍）
+export async function getReachableArea(
+  centerLat: number,
+  centerLon: number,
+  maxTimeMinutes: number = 30,
+  vehicleType: 'car' | 'motorcycle' | 'bus' = 'car'
+): Promise<any> {
+  try {
+    const isHealthy = await osrmClient.checkHealth();
+    if (!isHealthy) {
+      console.warn('OSRM 服務不可用');
+      return null;
+    }
+
+    const profile = vehicleType === 'car' ? 'driving' : 'driving';
+    const contours = [maxTimeMinutes * 60]; // 轉換為秒
+
+    return await osrmClient.getIsochrone(
+      centerLat, centerLon,
+      {
+        profile,
+        contours,
+        geometries: 'geojson'
+      }
+    );
+  } catch (error) {
+    console.error('計算可到達範圍失敗:', error);
+    return null;
   }
 }
