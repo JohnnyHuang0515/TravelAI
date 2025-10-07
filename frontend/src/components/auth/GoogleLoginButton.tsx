@@ -9,7 +9,7 @@ interface GoogleLoginButtonProps {
 export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ className }) => {
   const handleGoogleLogin = () => {
     // 重定向到後端的 Google OAuth 端點
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     window.location.href = `${apiUrl}/v1/auth/oauth/google`;
   };
 

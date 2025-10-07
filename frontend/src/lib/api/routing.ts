@@ -3,7 +3,7 @@
  * 整合後端 OSRM 服務提供路由計算功能
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export interface Coordinate {
   lat: number;

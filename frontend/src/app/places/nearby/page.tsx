@@ -6,8 +6,44 @@ import { Button } from "@/components/ui";
 import { Navbar } from "@/components/layout/Navbar";
 import { useGeolocation } from "@/lib/hooks/useGeolocation";
 import { Place, PlaceFilter as FilterType, UserLocation } from "@/lib/types/place";
+
+// API 回應的景點資料類型
+interface ApiPlace {
+  id: string;
+  name: string;
+  categories: string[];
+  rating: number | null;
+  stay_minutes: number;
+  price_range: number | null;
+  location: {
+    lat: number;
+    lon: number;
+  };
+  is_favorite: boolean;
+}
+
+// 轉換後的景點資料類型
+interface TransformedPlace {
+  id: string;
+  name: string;
+  categories: string[];
+  rating: number;
+  stay_minutes: number;
+  price_range: number;
+  location: {
+    lat: number;
+    lon: number;
+  };
+  photo_url: string;
+  is_favorite: boolean;
+  description: string;
+  address: string;
+  phone: string;
+  openTime: string;
+}
 import { calculateMultipleVehicleEmissions } from "@/lib/utils/carbonEmission";
 import { calculateMultipleVehicleRoutes, getTrafficConditionSuggestion } from "@/lib/utils/routeCalculation";
+// import { searchPlaces } from "@/lib/api/places"; // 暫時不使用
 
 export default function NearbyPlacesPage() {
   const { location, error, loading: locationLoading, requestLocation } = useGeolocation();
@@ -15,6 +51,8 @@ export default function NearbyPlacesPage() {
   const [loading, setLoading] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [manualLocation, setManualLocation] = useState<{lat: number, lon: number} | null>(null);
   
   const [filters, setFilters] = useState<FilterType>({
     categories: [],
@@ -26,13 +64,21 @@ export default function NearbyPlacesPage() {
   });
 
   const userLocation: UserLocation | undefined = useMemo(() => {
+    // 優先使用手動選擇的位置，其次使用 GPS 位置
+    if (manualLocation) {
+      return {
+        lat: manualLocation.lat,
+        lon: manualLocation.lon,
+        accuracy: 0 // 手動選擇的位置精度設為 0
+      };
+    }
     if (!location) return undefined;
     return {
       lat: location.coords.latitude,
       lon: location.coords.longitude,
       accuracy: location.coords.accuracy
     };
-  }, [location]);
+  }, [location, manualLocation]);
 
   // 計算兩點間距離的函數（使用 Haversine 公式）
   const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -52,140 +98,39 @@ export default function NearbyPlacesPage() {
     try {
       setLoading(true);
       
-      // 模擬 API 呼叫
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 直接調用後端 API
+      const response = await fetch(
+        `http://localhost:8000/v1/places/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&radius=${filters.radius}`
+      );
       
-      // 真實的宜蘭地區景點和餐廳資料
-      const realPlacesData = [
-        // 景點資料 (來自 tdx_scenic_yilan_raw.json)
-        {
-          id: "1",
-          name: "蘇澳冷泉公園",
-          categories: ["文化類", "溫泉"],
-          rating: 4.5,
-          stay_minutes: 120,
-          price_range: 2,
-          location: { lat: 24.59654998779297, lon: 121.85115814208984 },
-          photo_url: "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=300&h=200&fit=crop",
-          is_favorite: false,
-          description: "得天獨厚的「天下第一奇泉」蘇澳冷泉",
-          address: "宜蘭縣270蘇澳鎮冷泉路6-4號",
-          phone: "886-3-9312152",
-          openTime: "9：00- 17：00"
-        },
-        {
-          id: "2",
-          name: "礁溪溫泉公園",
-          categories: ["溫泉", "休閒"],
-          rating: 4.3,
-          stay_minutes: 90,
-          price_range: 3,
-          location: { lat: 24.8270, lon: 121.7730 },
-          photo_url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&h=200&fit=crop",
-          is_favorite: true,
-          description: "宜蘭著名的溫泉勝地",
-          address: "宜蘭縣礁溪鄉",
-          phone: "886-3-9872403",
-          openTime: "全天開放"
-        },
-        {
-          id: "3",
-          name: "蘭陽博物館",
-          categories: ["文化類", "博物館"],
-          rating: 4.7,
-          stay_minutes: 180,
-          price_range: 2,
-          location: { lat: 24.8660, lon: 121.8320 },
-          photo_url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop",
-          is_favorite: false,
-          description: "展示宜蘭歷史文化的博物館",
-          address: "宜蘭縣頭城鎮青雲路三段750號",
-          phone: "886-3-9779700",
-          openTime: "9:00-17:00"
-        },
-        {
-          id: "4",
-          name: "太平山國家森林遊樂區",
-          categories: ["自然景觀", "森林"],
-          rating: 4.8,
-          stay_minutes: 240,
-          price_range: 2,
-          location: { lat: 24.5100, lon: 121.5500 },
-          photo_url: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=200&fit=crop",
-          is_favorite: false,
-          description: "台灣著名的森林遊樂區",
-          address: "宜蘭縣大同鄉",
-          phone: "886-3-9809806",
-          openTime: "6:00-20:00"
-        },
-        {
-          id: "5",
-          name: "幾米公園",
-          categories: ["藝術", "文化類"],
-          rating: 4.4,
-          stay_minutes: 60,
-          price_range: 1,
-          location: { lat: 24.7510, lon: 121.7530 },
-          photo_url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop",
-          is_favorite: true,
-          description: "以幾米繪本為主題的公園",
-          address: "宜蘭縣宜蘭市光復路1號",
-          phone: "886-3-9325164",
-          openTime: "全天開放"
-        },
-        // 餐廳資料 (來自 tdx_restaurant_yilan_raw.json)
-        {
-          id: "6",
-          name: "藏酒酒莊",
-          categories: ["中式美食", "酒莊"],
-          rating: 4.2,
-          stay_minutes: 120,
-          price_range: 3,
-          location: { lat: 24.90903091430664, lon: 121.84961700439453 },
-          photo_url: "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=300&h=200&fit=crop",
-          is_favorite: false,
-          description: "以各式水果酒釀造為主的酒莊",
-          address: "宜蘭縣頭城鎮更新路126-50號",
-          phone: "886-3-9778555",
-          openTime: "09:00-21:00(預約制)"
-        },
-        {
-          id: "7",
-          name: "羅東夜市",
-          categories: ["夜市", "美食"],
-          rating: 4.6,
-          stay_minutes: 90,
-          price_range: 2,
-          location: { lat: 24.6770, lon: 121.7730 },
-          photo_url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&h=200&fit=crop",
-          is_favorite: true,
-          description: "宜蘭最著名的夜市",
-          address: "宜蘭縣羅東鎮",
-          phone: "",
-          openTime: "17:00-24:00"
-        },
-        {
-          id: "8",
-          name: "三星蔥文化館",
-          categories: ["文化類", "農特產"],
-          rating: 4.1,
-          stay_minutes: 60,
-          price_range: 1,
-          location: { lat: 24.6700, lon: 121.6600 },
-          photo_url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop",
-          is_favorite: false,
-          description: "展示三星蔥文化的展館",
-          address: "宜蘭縣三星鄉",
-          phone: "886-3-9892010",
-          openTime: "9:00-17:00"
-        }
-      ];
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const apiResponse = await response.json();
 
-
-      const placesData = realPlacesData;
+      // 轉換 API 回應格式為前端需要的格式
+      const transformedPlaces: TransformedPlace[] = apiResponse.places.map((place: ApiPlace) => ({
+        id: place.id,
+        name: place.name,
+        categories: place.categories || [],
+        rating: place.rating || 0,
+        stay_minutes: place.stay_minutes || 120,
+        price_range: place.price_range || 2,
+        location: { 
+          lat: place.location.lat, 
+          lon: place.location.lon 
+        },
+        photo_url: "https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=300&h=200&fit=crop",
+        is_favorite: place.is_favorite || false,
+        description: "",
+        address: "",
+        phone: "",
+        openTime: "營業時間未知"
+      }));
 
       // 計算每個景點到用戶位置的實際距離、車程和碳排放
-      const mockPlaces: Place[] = await Promise.all(placesData.map(async (place) => {
+      const mockPlaces: Place[] = await Promise.all(transformedPlaces.map(async (place: TransformedPlace) => {
         const distanceMeters = Math.round(calculateDistance(
           userLocation.lat,
           userLocation.lon,
@@ -271,7 +216,7 @@ export default function NearbyPlacesPage() {
     } finally {
       setLoading(false);
     }
-  }, [userLocation, filters]);
+  }, [userLocation, filters, calculateDistance]);
 
   useEffect(() => {
     if (userLocation) {
@@ -333,9 +278,17 @@ export default function NearbyPlacesPage() {
           <p className="text-slate-600 dark:text-slate-300 mb-6">
             {error.message || "請允許瀏覽器存取您的位置，或手動輸入位置"}
           </p>
-          <Button onClick={requestLocation}>
-            重新嘗試
-          </Button>
+          <div className="space-x-4">
+            <Button onClick={requestLocation}>
+              重新嘗試
+            </Button>
+            <Button 
+              onClick={() => setShowLocationPicker(true)}
+              variant="outline"
+            >
+              手動選擇位置
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -355,30 +308,46 @@ export default function NearbyPlacesPage() {
             <p className="text-slate-600 dark:text-slate-300">
               探索您周邊的精彩景點
             </p>
+            {userLocation && (
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                位置: {userLocation.lat.toFixed(4)}, {userLocation.lon.toFixed(4)}
+                {manualLocation && <span className="ml-2 text-blue-600">(手動選擇)</span>}
+              </p>
+            )}
           </div>
           
-          {/* 視圖切換 */}
-          <div className="flex bg-white dark:bg-slate-800 rounded-lg p-1">
+          {/* 操作按鈕 */}
+          <div className="flex items-center space-x-4">
             <button
-              onClick={() => setViewMode('list')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-primary-500 text-white'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
+              onClick={() => setShowLocationPicker(true)}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
             >
-              列表
+              手動選擇位置
             </button>
-            <button
-              onClick={() => setViewMode('map')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'map'
-                  ? 'bg-primary-500 text-white'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              地圖
-            </button>
+            
+            {/* 視圖切換 */}
+            <div className="flex bg-white dark:bg-slate-800 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-primary-500 text-white'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                列表
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'map'
+                    ? 'bg-primary-500 text-white'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                地圖
+              </button>
+            </div>
           </div>
         </div>
 
@@ -454,6 +423,84 @@ export default function NearbyPlacesPage() {
         </div>
         </div>
       </main>
+
+      {/* 手動位置選擇模態框 */}
+      {showLocationPicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              手動選擇位置
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  緯度 (Latitude)
+                </label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  placeholder="例如: 25.0330"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                  id="manual-lat"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  經度 (Longitude)
+                </label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  placeholder="例如: 121.5654"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                  id="manual-lon"
+                />
+              </div>
+              
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                <p>💡 提示：</p>
+                <p>• 台北: 25.0330, 121.5654</p>
+                <p>• 宜蘭: 24.7500, 121.7500</p>
+                <p>• 您可以在 Google Maps 中右鍵點擊位置來獲取座標</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowLocationPicker(false)}
+                className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  const latInput = document.getElementById('manual-lat') as HTMLInputElement;
+                  const lonInput = document.getElementById('manual-lon') as HTMLInputElement;
+                  
+                  if (latInput.value && lonInput.value) {
+                    const lat = parseFloat(latInput.value);
+                    const lon = parseFloat(lonInput.value);
+                    
+                    if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                      setManualLocation({ lat, lon });
+                      setShowLocationPicker(false);
+                    } else {
+                      alert('請輸入有效的座標範圍：緯度 -90 到 90，經度 -180 到 180');
+                    }
+                  } else {
+                    alert('請輸入緯度和經度');
+                  }
+                }}
+                className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg"
+              >
+                確認
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

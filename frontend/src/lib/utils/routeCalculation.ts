@@ -4,7 +4,7 @@
 import { routingAPI } from '../api/routing';
 import { osrmClient, OSRMRoute } from '../services/osrmClient';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export interface RouteInfo {
   distance: number; // 實際車程距離（米）

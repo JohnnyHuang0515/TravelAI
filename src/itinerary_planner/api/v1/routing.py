@@ -13,7 +13,7 @@ from datetime import datetime
 router = APIRouter(prefix="/routing", tags=["routing"])
 
 # OSRM 服務配置
-OSRM_BASE_URL = "http://localhost:5001"
+OSRM_BASE_URL = "http://osrm-backend:5000"
 
 class Coordinate(BaseModel):
     """座標點"""
