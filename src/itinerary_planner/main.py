@@ -100,13 +100,15 @@ except Exception as e:
     import traceback
     traceback.print_exc()
 
-# 註冊對話式規劃路由
+# 舊的對話模式已移除，統一使用 unified_conversation
+
+# 註冊統一對話引擎路由
 try:
-    from .api.v1.endpoints import conversation
-    app.include_router(conversation.router, prefix="/v1/chat", tags=["Conversational Planning"])
-    logger.info("✅ 對話式規劃路由註冊成功")
+    from .api.v1.endpoints import unified_conversation
+    app.include_router(unified_conversation.router, prefix="/v1/conversation", tags=["統一對話引擎"])
+    logger.info("✅ 統一對話引擎路由註冊成功")
 except Exception as e:
-    logger.error(f"❌ 對話式規劃路由註冊失敗: {e}")
+    logger.error(f"❌ 統一對話引擎路由註冊失敗: {e}")
     import traceback
     traceback.print_exc()
 
@@ -147,5 +149,15 @@ try:
     logger.info("✅ 路由計算路由註冊成功")
 except Exception as e:
     logger.error(f"❌ 路由計算路由註冊失敗: {e}")
+    import traceback
+    traceback.print_exc()
+
+# 註冊 OAuth 路由
+try:
+    from .interfaces.api.v1.endpoints import oauth
+    app.include_router(oauth.router, prefix="/v1", tags=["OAuth"])
+    logger.info("✅ OAuth 路由註冊成功")
+except Exception as e:
+    logger.error(f"❌ OAuth 路由註冊失敗: {e}")
     import traceback
     traceback.print_exc()

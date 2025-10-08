@@ -14,7 +14,7 @@ class RedisClient:
             self.client = redis.from_url(connection_url, decode_responses=True)
             self.client.ping()
             print("Successfully connected to Redis.")
-        except redis.exceptions.ConnectionError as e:
+        except Exception as e:
             print(f"Could not connect to Redis: {e}")
             self.client = None
 

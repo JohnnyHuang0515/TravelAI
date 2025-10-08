@@ -87,9 +87,44 @@ export const generateItinerary = async (request: PlanningRequest): Promise<Plann
   return response.data;
 };
 
-// 發送聊天訊息
-export const sendChatMessage = async (request: ChatRequest): Promise<ChatResponse> => {
-  const response = await axios.post(`${API_BASE_URL}/v1/chat/message`, request, {
+// 舊的對話 API 已移除，請使用 unifiedChat 或 sendUnifiedMessage
+
+// 統一對話引擎API
+export interface UnifiedConversationRequest {
+  session_id: string;
+  message: string;
+  conversation_history?: Array<{role: string; content: string}>;
+  user_preferences?: Record<string, any>;
+  context?: Record<string, any>;
+}
+
+export interface UnifiedConversationResponse {
+  session_id: string;
+  message: string;
+  intent: string;
+  suggestions: string[];
+  collected_info: Record<string, any>;
+  is_complete: boolean;
+  itinerary?: any;
+  confidence_score: number;
+  turn_count: number;
+  timestamp: string;
+  error?: string;
+}
+
+export interface ConversationStateResponse {
+  session_id: string;
+  current_intent?: string;
+  collected_info: Record<string, any>;
+  conversation_history: Array<{role: string; content: string; timestamp: string}>;
+  confidence_score: number;
+  last_activity: string;
+  turn_count: number;
+}
+
+// 統一對話聊天
+export const unifiedChat = async (request: UnifiedConversationRequest): Promise<UnifiedConversationResponse> => {
+  const response = await axios.post(`${API_BASE_URL}/v1/conversation/chat`, request, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
       "Content-Type": "application/json",
@@ -99,9 +134,25 @@ export const sendChatMessage = async (request: ChatRequest): Promise<ChatRespons
   return response.data;
 };
 
-// 取得聊天歷史
-export const getChatHistory = async (sessionId: string): Promise<ChatMessage[]> => {
-  const response = await axios.get(`${API_BASE_URL}/v1/chat/history/${sessionId}`, {
+// 發送單一訊息
+export const sendUnifiedMessage = async (sessionId: string, message: string, metadata?: Record<string, any>): Promise<UnifiedConversationResponse> => {
+  const response = await axios.post(`${API_BASE_URL}/v1/conversation/message`, {
+    session_id: sessionId,
+    message,
+    metadata
+  }, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response.data;
+};
+
+// 獲取對話狀態
+export const getUnifiedConversationState = async (sessionId: string): Promise<ConversationStateResponse> => {
+  const response = await axios.get(`${API_BASE_URL}/v1/conversation/state/${sessionId}`, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
@@ -110,9 +161,19 @@ export const getChatHistory = async (sessionId: string): Promise<ChatMessage[]> 
   return response.data;
 };
 
-// 取得會話狀態
-export const getSessionStatus = async (sessionId: string): Promise<SessionStatus> => {
-  const response = await axios.get(`${API_BASE_URL}/v1/chat/session/${sessionId}`, {
+// 重置對話
+export const resetUnifiedConversation = async (sessionId: string): Promise<void> => {
+  await axios.post(`${API_BASE_URL}/v1/conversation/reset/${sessionId}`, {}, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+};
+
+// 獲取智能建議
+export const getUnifiedSuggestions = async (sessionId: string, context?: string): Promise<{session_id: string; suggestions: string[]; context?: string; timestamp: string}> => {
+  const response = await axios.get(`${API_BASE_URL}/v1/conversation/suggestions/${sessionId}`, {
+    params: { context },
     headers: {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
@@ -121,14 +182,30 @@ export const getSessionStatus = async (sessionId: string): Promise<SessionStatus
   return response.data;
 };
 
-// 重置會話
-export const resetSession = async (sessionId: string): Promise<void> => {
-  await axios.post(`${API_BASE_URL}/v1/chat/reset/${sessionId}`, {}, {
+// 獲取會話統計
+export const getUnifiedSessionStats = async (sessionId: string): Promise<{
+  session_id: string;
+  turn_count: number;
+  collected_info_count: number;
+  confidence_score: number;
+  last_activity: string;
+  conversation_duration?: number;
+  completion_rate: number;
+  timestamp: string;
+}> => {
+  const response = await axios.get(`${API_BASE_URL}/v1/conversation/stats/${sessionId}`, {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
   });
+
+  return response.data;
 };
+
+// 舊的 getChatHistory, getSessionStatus, resetSession 已移除
+// 請使用統一對話引擎的對應方法：
+// - getUnifiedConversationState
+// - resetUnifiedConversation
 
 // 提交回饋
 export const submitFeedback = async (request: FeedbackRequest): Promise<void> => {

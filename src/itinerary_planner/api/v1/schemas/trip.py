@@ -70,9 +70,9 @@ class TripSummaryResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
-        schema_extra = {
+    model_config = {
+        "from_attributes": True,
+        "json_schema_extra": {
             "example": {
                 "id": "trip_001",
                 "title": "宜蘭兩日遊",
@@ -87,6 +87,7 @@ class TripSummaryResponse(BaseModel):
                 "updated_at": "2025-09-30T10:00:00Z"
             }
         }
+    }
 
 
 class TripDetailResponse(BaseModel):
@@ -106,8 +107,9 @@ class TripDetailResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class TripListResponse(BaseModel):
@@ -118,8 +120,8 @@ class TripListResponse(BaseModel):
     page_size: int
     total_pages: int
     
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "trips": [],
                 "total": 5,
@@ -128,6 +130,7 @@ class TripListResponse(BaseModel):
                 "total_pages": 1
             }
         }
+    }
 
 
 class ShareTripResponse(BaseModel):
@@ -135,13 +138,14 @@ class ShareTripResponse(BaseModel):
     share_url: str
     share_token: str
     
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "share_url": "https://app.com/trips/public/abc123...",
                 "share_token": "abc123..."
             }
         }
+    }
 
 
 class MessageResponse(BaseModel):

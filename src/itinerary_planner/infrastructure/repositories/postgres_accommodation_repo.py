@@ -75,11 +75,11 @@ class PostgresAccommodationRepository(AccommodationRepository):
         if not embedding:
             return []
         
-        # 使用 pgvector 的相似度搜尋
+        # 使用 pgvector 的餘弦相似度搜尋
         query = self.db.query(OrmAccommodation).filter(
             OrmAccommodation.embedding.isnot(None)
         ).order_by(
-            OrmAccommodation.embedding.l2_distance(embedding)
+            OrmAccommodation.embedding.cosine_distance(embedding)
         ).limit(top_k)
         
         return query.all()

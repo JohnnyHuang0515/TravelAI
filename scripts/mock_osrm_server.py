@@ -227,13 +227,16 @@ def trip(coordinates):
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    
     print("🚀 啟動模擬 OSRM 服務器...")
-    print("🌐 服務地址: http://localhost:5002")
-    print("📊 健康檢查: http://localhost:5002/health")
-    print("🗺️ 路由 API: http://localhost:5002/route/v1/driving/{coordinates}")
-    print("⏰ 等時線 API: http://localhost:5002/isochrone/v1/driving/{coordinates}")
-    print("🚗 行程 API: http://localhost:5002/trip/v1/driving/{coordinates}")
+    print(f"🌐 服務地址: http://localhost:{port}")
+    print(f"📊 健康檢查: http://localhost:{port}/health")
+    print(f"🗺️ 路由 API: http://localhost:{port}/route/v1/driving/{{coordinates}}")
+    print(f"⏰ 等時線 API: http://localhost:{port}/isochrone/v1/driving/{{coordinates}}")
+    print(f"🚗 行程 API: http://localhost:{port}/trip/v1/driving/{{coordinates}}")
     print("")
     print("💡 使用 Ctrl+C 停止服務")
     
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True)

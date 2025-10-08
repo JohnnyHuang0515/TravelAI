@@ -47,7 +47,8 @@ import { calculateMultipleVehicleRoutes, getTrafficConditionSuggestion } from "@
 
 export default function NearbyPlacesPage() {
   const { location, error, loading: locationLoading, requestLocation } = useGeolocation();
-  const [places, setPlaces] = useState<Place[]>([]);
+  const [allPlaces, setAllPlaces] = useState<Place[]>([]); // 所有載入的景點
+  const [places, setPlaces] = useState<Place[]>([]); // 篩選後的景點
   const [loading, setLoading] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
@@ -80,27 +81,16 @@ export default function NearbyPlacesPage() {
     };
   }, [location, manualLocation]);
 
-  // 計算兩點間距離的函數（使用 Haversine 公式）
-  const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371000; // 地球半徑（米）
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // 距離（米）
-  }, []);
-
   const loadNearbyPlaces = useCallback(async () => {
     if (!userLocation) return;
 
     try {
       setLoading(true);
       
-      // 直接調用後端 API
+      // 直接調用後端 API - 使用固定的最大範圍 20km 獲取所有景點
+      // 前端再根據 filters.radius 進行過濾
       const response = await fetch(
-        `http://localhost:8000/v1/places/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&radius=${filters.radius}`
+        `http://localhost:8000/v1/places/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&radius=20000`
       );
       
       if (!response.ok) {
@@ -131,18 +121,7 @@ export default function NearbyPlacesPage() {
 
       // 計算每個景點到用戶位置的實際距離、車程和碳排放
       const mockPlaces: Place[] = await Promise.all(transformedPlaces.map(async (place: TransformedPlace) => {
-        const distanceMeters = Math.round(calculateDistance(
-          userLocation.lat,
-          userLocation.lon,
-          place.location.lat,
-          place.location.lon
-        ));
-        const distanceKm = distanceMeters / 1000;
-        
-        // 計算碳排放
-        const carbonEmission = calculateMultipleVehicleEmissions(distanceKm);
-        
-        // 計算車程資訊
+        // 計算車程資訊（包含實際路線距離）
         const trafficConditions = getTrafficConditionSuggestion();
         const routeInfo = await calculateMultipleVehicleRoutes(
           userLocation.lat,
@@ -152,84 +131,96 @@ export default function NearbyPlacesPage() {
           trafficConditions
         );
         
+        // 使用汽車路線的實際距離（最準確）
+        const actualDistanceKm = routeInfo.car.distanceKm;
+        const actualDistanceMeters = routeInfo.car.distance;
+        
+        // 使用實際路線距離計算碳排放
+        const carbonEmission = calculateMultipleVehicleEmissions(actualDistanceKm);
+        
         return {
           ...place,
           latitude: place.location.lat,
           longitude: place.location.lon,
-          distance_meters: distanceMeters,
+          distance_meters: actualDistanceMeters, // 使用實際路線距離
           carbon_emission: carbonEmission,
           route_info: routeInfo
         };
       }));
 
-
-      // 應用篩選
-      let filteredPlaces = mockPlaces;
-
-      // 類別篩選
-      if (filters.categories.length > 0) {
-        filteredPlaces = filteredPlaces.filter(place =>
-          place.categories.some(category =>
-            filters.categories.some(filterCategory =>
-              category.toLowerCase().includes(filterCategory.toLowerCase())
-            )
-          )
-        );
-      }
-
-      // 評分篩選
-      if (filters.min_rating > 0) {
-        filteredPlaces = filteredPlaces.filter(place =>
-          place.rating && place.rating >= filters.min_rating
-        );
-      }
-
-      // 距離篩選
-      filteredPlaces = filteredPlaces.filter(place =>
-        place.distance_meters && place.distance_meters <= filters.radius
-      );
-
-      // 排序 - 確保按照距離排序
-      filteredPlaces.sort((a, b) => {
-        switch (filters.sort_by) {
-          case 'distance':
-            const distanceA = a.distance_meters || 0;
-            const distanceB = b.distance_meters || 0;
-            return filters.sort_order === 'desc' ? distanceB - distanceA : distanceA - distanceB;
-          case 'rating':
-            const ratingA = a.rating || 0;
-            const ratingB = b.rating || 0;
-            return filters.sort_order === 'desc' ? ratingA - ratingB : ratingB - ratingA;
-          case 'name':
-            const nameA = a.name.toLowerCase();
-            const nameB = b.name.toLowerCase();
-            return filters.sort_order === 'desc' ? nameB.localeCompare(nameA) : nameA.localeCompare(nameB);
-          default:
-            return 0;
-        }
-      });
-
-
-      setPlaces(filteredPlaces);
+      // 儲存所有景點（不篩選）
+      setAllPlaces(mockPlaces);
     } catch (error) {
       console.error("載入附近景點失敗:", error);
     } finally {
       setLoading(false);
     }
-  }, [userLocation, filters, calculateDistance]);
+  }, [userLocation]); // 只在位置改變時重新載入
 
+  // 只在位置改變時載入數據
   useEffect(() => {
     if (userLocation) {
       loadNearbyPlaces();
     }
   }, [userLocation, loadNearbyPlaces]);
 
+  // 當篩選條件改變時，重新篩選已載入的數據
+  useEffect(() => {
+    let filteredPlaces = [...allPlaces];
+
+    // 類別篩選
+    if (filters.categories.length > 0) {
+      filteredPlaces = filteredPlaces.filter(place =>
+        place.categories.some(category =>
+          filters.categories.some(filterCategory =>
+            category.toLowerCase().includes(filterCategory.toLowerCase())
+          )
+        )
+      );
+    }
+
+    // 評分篩選
+    if (filters.min_rating > 0) {
+      filteredPlaces = filteredPlaces.filter(place =>
+        place.rating && place.rating >= filters.min_rating
+      );
+    }
+
+    // 距離篩選
+    filteredPlaces = filteredPlaces.filter(place =>
+      place.distance_meters && place.distance_meters <= filters.radius
+    );
+
+    // 排序
+    filteredPlaces.sort((a, b) => {
+      switch (filters.sort_by) {
+        case 'distance':
+          const distanceA = a.distance_meters || 0;
+          const distanceB = b.distance_meters || 0;
+          return filters.sort_order === 'desc' ? distanceB - distanceA : distanceA - distanceB;
+        case 'rating':
+          const ratingA = a.rating || 0;
+          const ratingB = b.rating || 0;
+          return filters.sort_order === 'desc' ? ratingA - ratingB : ratingB - ratingA;
+        case 'name':
+          const nameA = a.name.toLowerCase();
+          const nameB = b.name.toLowerCase();
+          return filters.sort_order === 'desc' ? nameB.localeCompare(nameA) : nameA.localeCompare(nameB);
+        default:
+          return 0;
+      }
+    });
+
+    setPlaces(filteredPlaces);
+  }, [allPlaces, filters]);
+
   const handlePlaceClick = useCallback((placeId: string) => {
     setSelectedPlaceId(prev => prev === placeId ? null : placeId);
   }, []);
 
   const handleFavorite = useCallback(async (placeId: string) => {
-    setPlaces(prev => prev.map(place =>
+    // 同時更新 allPlaces 和 places
+    setAllPlaces(prev => prev.map(place =>
       place.id === placeId
         ? { ...place, is_favorite: !place.is_favorite }
         : place
@@ -379,18 +370,20 @@ export default function NearbyPlacesPage() {
                     </div>
                   ))
                 ) : places.length > 0 ? (
-                  places.map((place) => (
-                    <PlaceCard
-                      key={place.id}
-                      place={place}
-                      distance={place.distance_meters}
-                      isFavorite={place.is_favorite}
-                      userLocation={userLocation}
-                      onFavorite={() => handleFavorite(place.id)}
-                      onViewDetail={() => handleViewDetail(place.id)}
-                      onAddToTrip={() => handleAddToTrip(place.id)}
-                    />
-                  ))
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {places.map((place) => (
+                      <PlaceCard
+                        key={place.id}
+                        place={place}
+                        distance={place.distance_meters}
+                        isFavorite={place.is_favorite}
+                        userLocation={userLocation}
+                        onFavorite={() => handleFavorite(place.id)}
+                        onViewDetail={() => handleViewDetail(place.id)}
+                        onAddToTrip={() => handleAddToTrip(place.id)}
+                      />
+                    ))}
+                  </div>
                 ) : (
                   <div className="bg-white dark:bg-slate-800 rounded-xl p-8 text-center">
                     <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -415,7 +408,7 @@ export default function NearbyPlacesPage() {
                   userLocation={userLocation}
                   selectedPlaceId={selectedPlaceId || undefined}
                   onPlaceClick={handlePlaceClick}
-                  className="h-96"
+                  className="h-[600px]"
                 />
               </div>
             )}

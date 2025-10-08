@@ -13,7 +13,8 @@ from datetime import datetime
 router = APIRouter(prefix="/routing", tags=["routing"])
 
 # OSRM 服務配置
-OSRM_BASE_URL = "http://osrm-backend:5000"
+import os
+OSRM_BASE_URL = os.getenv("OSRM_HOST", "http://localhost:5000")
 
 class Coordinate(BaseModel):
     """座標點"""
@@ -90,7 +91,7 @@ async def call_osrm_api(coordinates: str, alternatives: bool = False, vehicle_ty
         # 後續可以通過調整 OSRM 數據或使用不同的 profile 來實現路線區分
         pass
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url, params=params)
             response.raise_for_status()
             return response.json()

@@ -92,71 +92,84 @@ export function PlaceMap({
         .bindPopup('📍 我的位置');
     }
 
-    // 添加景點標記
+    // 添加景點標記 - 簡潔的大頭針樣式
     places.forEach((place, index) => {
       const isSelected = selectedPlaceId === place.id;
       
-      const markerIcon = (window as any).L.divIcon({
-        html: `<div style="background-color: ${isSelected ? '#ef4444' : '#8b5cf6'}; color: white; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">${index + 1}</div>`,
-        iconSize: [28, 28],
-        className: 'place-marker'
+      // 使用 Leaflet 預設的大頭針圖標
+      const markerIcon = (window as any).L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
       });
 
       const marker = (window as any).L.marker([place.location.lat, place.location.lon], { icon: markerIcon })
         .addTo(map);
 
-          // 創建彈出視窗內容
-          const popupContent = `
-            <div style="min-width: 240px;">
-              <div style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${place.name}</div>
-              <div style="font-size: 14px;">
-                ${place.rating ? `<div style="color: #f59e0b; margin-bottom: 4px;">⭐ ${place.rating.toFixed(1)}</div>` : ''}
-                ${place.distance_meters ? `<div style="color: #6b7280; margin-bottom: 4px;">📍 ${place.distance_meters < 1000 ? `${place.distance_meters}m` : `${(place.distance_meters / 1000).toFixed(1)}km`}</div>` : ''}
-                ${place.categories && place.categories.length > 0 ? `<div style="color: #6b7280; margin-bottom: 6px;">🏷️ ${place.categories.join(", ")}</div>` : ''}
-                ${place.route_info ? `
-                  <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 6px; margin-top: 6px;">
-                    <div style="font-size: 12px; font-weight: 500; color: #1e40af; margin-bottom: 3px;">🛣️ 車程資訊</div>
-                    <div style="font-size: 9px; color: #1d4ed8; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px;">
-                      <div style="text-align: center;">
-                        <div style="font-weight: 500;">🏍️ 機車</div>
-                        <div>${place.route_info.motorcycle.formatted.distance}</div>
-                        <div>${place.route_info.motorcycle.formatted.duration}</div>
-                      </div>
-                      <div style="text-align: center;">
-                        <div style="font-weight: 500;">🚗 小客車</div>
-                        <div>${place.route_info.car.formatted.distance}</div>
-                        <div>${place.route_info.car.formatted.duration}</div>
-                      </div>
-                      <div style="text-align: center;">
-                        <div style="font-weight: 500;">🚌 大客車</div>
-                        <div>${place.route_info.bus.formatted.distance}</div>
-                        <div>${place.route_info.bus.formatted.duration}</div>
-                      </div>
-                    </div>
+      // 創建彈出視窗內容
+      const popupContent = `
+        <div style="min-width: 240px;">
+          <div style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${place.name}</div>
+          <div style="font-size: 14px;">
+            ${place.rating ? `<div style="color: #f59e0b; margin-bottom: 4px;">⭐ ${place.rating.toFixed(1)}</div>` : ''}
+            ${place.distance_meters ? `<div style="color: #6b7280; margin-bottom: 4px;">📍 ${place.distance_meters < 1000 ? `${place.distance_meters}m` : `${(place.distance_meters / 1000).toFixed(1)}km`}</div>` : ''}
+            ${place.categories && place.categories.length > 0 ? `<div style="color: #6b7280; margin-bottom: 6px;">🏷️ ${place.categories.join(", ")}</div>` : ''}
+            ${place.route_info ? `
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px; margin-top: 8px;">
+                <div style="font-size: 13px; font-weight: 600; color: #1e40af; margin-bottom: 6px;">🛣️ 車程資訊</div>
+                <div style="font-size: 11px; color: #1d4ed8; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+                  <div style="text-align: center; padding: 4px;">
+                    <div style="font-weight: 600; font-size: 12px;">🏍️ 機車</div>
+                    <div style="margin-top: 2px;">${place.route_info.motorcycle.formatted.distance}</div>
+                    <div>${place.route_info.motorcycle.formatted.duration}</div>
                   </div>
-                ` : ''}
-                ${place.carbon_emission ? `
-                  <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 6px; margin-top: 6px;">
-                    <div style="font-size: 12px; font-weight: 500; color: #166534; margin-bottom: 3px;">🌱 交通碳排放</div>
-                    <div style="font-size: 10px; color: #15803d; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
-                      <span style="text-align: center;">🏍️ ${place.carbon_emission.motorcycle.formatted}</span>
-                      <span style="text-align: center;">🚗 ${place.carbon_emission.car.formatted}</span>
-                      <span style="text-align: center;">🚌 ${place.carbon_emission.bus.formatted}</span>
-                    </div>
+                  <div style="text-align: center; padding: 4px;">
+                    <div style="font-weight: 600; font-size: 12px;">🚗 小客車</div>
+                    <div style="margin-top: 2px;">${place.route_info.car.formatted.distance}</div>
+                    <div>${place.route_info.car.formatted.duration}</div>
                   </div>
-                ` : ''}
+                  <div style="text-align: center; padding: 4px;">
+                    <div style="font-weight: 600; font-size: 12px;">🚌 大客車</div>
+                    <div style="margin-top: 2px;">${place.route_info.bus.formatted.distance}</div>
+                    <div>${place.route_info.bus.formatted.duration}</div>
+                  </div>
+                </div>
               </div>
-            </div>
-          `;
+            ` : ''}
+            ${place.carbon_emission ? `
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px; margin-top: 8px;">
+                <div style="font-size: 13px; font-weight: 600; color: #166534; margin-bottom: 6px;">🌱 每人碳排放</div>
+                <div style="font-size: 11px; color: #15803d; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+                  <div style="text-align: center; padding: 4px;">
+                    <div style="font-weight: 600;">🏍️ 機車</div>
+                    <div>${place.carbon_emission.motorcycle.formatted}</div>
+                    <div style="font-size: 9px; color: #16a34a;">(${place.carbon_emission.motorcycle.passengers}人)</div>
+                  </div>
+                  <div style="text-align: center; padding: 4px;">
+                    <div style="font-weight: 600;">🚗 小客車</div>
+                    <div>${place.carbon_emission.car.formatted}</div>
+                    <div style="font-size: 9px; color: #16a34a;">(${place.carbon_emission.car.passengers}人)</div>
+                  </div>
+                  <div style="text-align: center; padding: 4px;">
+                    <div style="font-weight: 600;">🚌 大客車</div>
+                    <div>${place.carbon_emission.bus.formatted}</div>
+                    <div style="font-size: 9px; color: #16a34a;">(${place.carbon_emission.bus.passengers}人)</div>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
 
       marker.bindPopup(popupContent);
 
-      // 添加點擊事件
-      if (onPlaceClick) {
-        marker.on('click', () => {
-          onPlaceClick(place.id);
-        });
-      }
+      // 點擊標記時只顯示彈出視窗，不觸發其他事件
+      // 移除 onPlaceClick 以避免地圖跳轉
     });
 
     return () => {

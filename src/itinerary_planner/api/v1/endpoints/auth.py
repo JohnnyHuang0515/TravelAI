@@ -58,7 +58,7 @@ async def register(
                 "username": user.username,
                 "provider": user.provider,
                 "is_verified": user.is_verified,
-                "created_at": user.created_at.isoformat(),
+                "created_at": user.created_at.isoformat() if user.created_at else None,
                 "last_login": user.last_login.isoformat() if user.last_login else None
             },
             "access_token": access_token,
@@ -98,7 +98,7 @@ async def login(
                 "username": user.username,
                 "provider": user.provider,
                 "is_verified": user.is_verified,
-                "created_at": user.created_at.isoformat(),
+                "created_at": user.created_at.isoformat() if user.created_at else None,
                 "last_login": user.last_login.isoformat() if user.last_login else None
             },
             "access_token": access_token,
@@ -123,15 +123,21 @@ async def refresh_token(
     
     - **refresh_token**: Refresh Token
     """
-    new_access_token = auth_service.refresh_access_token(request.refresh_token)
-    
-    if not new_access_token:
+    try:
+        new_access_token = auth_service.refresh_access_token(request.refresh_token)
+        
+        if not new_access_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh Token 無效或已過期"
+            )
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh Token 無效或已過期"
         )
     
-    return RefreshTokenResponse(access_token=new_access_token)
+    return RefreshTokenResponse(access_token=str(new_access_token))
 
 
 @router.post("/logout", response_model=MessageResponse)

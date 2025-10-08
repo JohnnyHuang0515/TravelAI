@@ -8,16 +8,16 @@ from typing import Dict, Optional, Tuple
 from datetime import datetime, timedelta
 
 from ...infrastructure.config.oauth_config import OAuthConfig
-from ...infrastructure.database.orm_models import User, UserPreference
-from ...infrastructure.database.repositories.auth_repository import AuthRepository
+from ...infrastructure.persistence.orm_models import User, UserPreference
+from ...infrastructure.repositories.user_repository import UserRepository, UserPreferenceRepository
 from .auth_service import AuthService
 
 
 class OAuthService:
     """OAuth 認證服務"""
     
-    def __init__(self, auth_repository: AuthRepository, auth_service: AuthService):
-        self.auth_repository = auth_repository
+    def __init__(self, user_repository: UserRepository, auth_service: AuthService):
+        self.user_repository = user_repository
         self.auth_service = auth_service
         self.oauth_states: Dict[str, datetime] = {}  # 簡單的狀態儲存，生產環境應使用 Redis
     
@@ -114,36 +114,31 @@ class OAuthService:
             raise ValueError("Incomplete user information")
         
         # 查詢或建立使用者
-        user = await self.auth_repository.get_user_by_email(email)
+        user = self.user_repository.get_by_email(email)
         
         if user:
-            # 更新現有使用者的 Google ID（如果尚未綁定）
-            if not user.google_id:
-                user.google_id = google_id
-                await self.auth_repository.update_user(user)
+            # 更新現有使用者的 provider_id（如果尚未綁定）
+            if not user.provider_id:
+                user.provider_id = google_id
+                user.provider = 'google'
+                # 更新使用者資料
+                self.user_repository.db.commit()
         else:
             # 建立新使用者
-            user = User(
+            user = self.user_repository.create_oauth_user(
                 email=email,
                 username=name or email.split("@")[0],
-                google_id=google_id,
-                avatar_url=picture,
-                is_verified=True,  # Google 帳號視為已驗證
-                hashed_password=""  # OAuth 使用者不需要密碼
+                provider='google',
+                provider_id=google_id,  # 統一使用 provider_id
+                profile={'avatar_url': picture}
             )
-            user = await self.auth_repository.create_user(user)
             
             # 建立預設偏好設定
-            default_preferences = UserPreference(
-                user_id=user.id,
-                preferred_languages=["zh-TW"],
-                interests=[],
-                budget_level="medium",
-                pace_preference="moderate"
-            )
-            await self.auth_repository.create_user_preference(default_preferences)
+            pref_repo = UserPreferenceRepository(self.user_repository.db)
+            pref_repo.create_preference(user_id=str(user.id))
         
         # 生成 JWT token
-        token = self.auth_service.create_access_token({"sub": str(user.id)})
+        access_token = self.auth_service.create_access_token(str(user.id), user.email)
+        refresh_token = self.auth_service.create_refresh_token(str(user.id), user.email)
         
-        return user, token
+        return user, access_token

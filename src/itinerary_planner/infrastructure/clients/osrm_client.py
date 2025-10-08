@@ -34,7 +34,7 @@ class OSRMClient:
         
         url = f"{self.base_url}/table/v1/driving/{coordinates}"
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             try:
                 response = await client.get(url, params=params)
                 response.raise_for_status()
@@ -76,7 +76,7 @@ class OSRMClient:
         elif route_preference == "balanced":
             params["geometries"] = "polyline"
         
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             try:
                 response = await client.get(url, params=params)
                 response.raise_for_status()

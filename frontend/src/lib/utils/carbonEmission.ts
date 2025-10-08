@@ -218,18 +218,62 @@ export function estimateAverageSpeed(distanceKm: number, roadType: RoadType): nu
   }
 }
 
-// 計算多種交通工具的碳排放比較
+// 平均乘客數設定
+const AVERAGE_PASSENGERS = {
+  car: 2,        // 小客車平均 2 人
+  motorcycle: 1, // 機車平均 1 人
+  bus: 25        // 大客車平均 25 人
+};
+
+// 計算多種交通工具的碳排放比較（每人碳排放）
 export function calculateMultipleVehicleEmissions(distanceKm: number): {
-  car: { co2Grams: number; co2Kg: number; formatted: string };
-  bus: { co2Grams: number; co2Kg: number; formatted: string };
-  motorcycle: { co2Grams: number; co2Kg: number; formatted: string };
+  car: { co2Grams: number; co2Kg: number; formatted: string; perPerson: number; passengers: number };
+  bus: { co2Grams: number; co2Kg: number; formatted: string; perPerson: number; passengers: number };
+  motorcycle: { co2Grams: number; co2Kg: number; formatted: string; perPerson: number; passengers: number };
 } {
   const roadType = estimateRoadType(distanceKm);
   const speed = estimateAverageSpeed(distanceKm, roadType);
   
+  // 計算整車碳排放
+  const carTotal = calculateCarbonEmission(distanceKm, speed, roadType, VehicleType.CAR);
+  const busTotal = calculateCarbonEmission(distanceKm, speed, roadType, VehicleType.BUS);
+  const motorcycleTotal = calculateCarbonEmission(distanceKm, speed, roadType, VehicleType.MOTORCYCLE);
+  
+  // 計算每人碳排放
+  const carPerPerson = carTotal.co2Grams / AVERAGE_PASSENGERS.car;
+  const busPerPerson = busTotal.co2Grams / AVERAGE_PASSENGERS.bus;
+  const motorcyclePerPerson = motorcycleTotal.co2Grams / AVERAGE_PASSENGERS.motorcycle;
+  
+  // 格式化每人碳排放
+  const formatPerPerson = (grams: number) => {
+    if (grams < 1000) {
+      return `${Math.round(grams)}g`;
+    } else {
+      return `${(grams / 1000).toFixed(2)}kg`;
+    }
+  };
+  
   return {
-    car: calculateCarbonEmission(distanceKm, speed, roadType, VehicleType.CAR),
-    bus: calculateCarbonEmission(distanceKm, speed, roadType, VehicleType.BUS),
-    motorcycle: calculateCarbonEmission(distanceKm, speed, roadType, VehicleType.MOTORCYCLE)
+    car: {
+      co2Grams: carTotal.co2Grams,
+      co2Kg: carTotal.co2Kg,
+      formatted: formatPerPerson(carPerPerson),
+      perPerson: carPerPerson,
+      passengers: AVERAGE_PASSENGERS.car
+    },
+    bus: {
+      co2Grams: busTotal.co2Grams,
+      co2Kg: busTotal.co2Kg,
+      formatted: formatPerPerson(busPerPerson),
+      perPerson: busPerPerson,
+      passengers: AVERAGE_PASSENGERS.bus
+    },
+    motorcycle: {
+      co2Grams: motorcycleTotal.co2Grams,
+      co2Kg: motorcycleTotal.co2Kg,
+      formatted: formatPerPerson(motorcyclePerPerson),
+      perPerson: motorcyclePerPerson,
+      passengers: AVERAGE_PASSENGERS.motorcycle
+    }
   };
 }

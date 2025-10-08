@@ -32,7 +32,7 @@ class AccommodationRecommendationService:
                 if recommended_accommodation:
                     # 轉換為領域模型
                     domain_accommodation = DomainAccommodation(
-                        accommodation_id=str(recommended_accommodation.id),
+                        place_id=str(recommended_accommodation.id),
                         name=recommended_accommodation.name,
                         type=recommended_accommodation.type,
                         check_in="15:00",  # 預設入住時間

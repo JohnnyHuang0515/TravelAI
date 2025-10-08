@@ -12,7 +12,9 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # 檢查 OSRM 數據是否存在
-OSRM_DATA_DIR="/Users/chieh/Documents/github專案/TravelAI/data/osrm"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+OSRM_DATA_DIR="$PROJECT_ROOT/data/osrm"
 TAIWAN_OSRM="$OSRM_DATA_DIR/taiwan-250923.osrm"
 
 if [ ! -f "$TAIWAN_OSRM" ]; then
@@ -53,7 +55,7 @@ cd "$OSRM_DATA_DIR"
 docker run -d \
     --name osrm-taiwan \
     -v "$(pwd)":/data \
-    -p 5001:5000 \
+    -p 5000:5000 \
     --platform linux/amd64 \
     osrm/osrm-backend:v5.22.0 \
     osrm-routed --algorithm mld /data/taiwan-250923.osrm
@@ -77,11 +79,11 @@ if docker ps | grep -q osrm-taiwan; then
     
     # 測試服務是否響應
     echo "🧪 測試 OSRM 服務響應..."
-    if curl -s "http://localhost:5001/route/v1/driving/121.5170,25.0478;121.5170,25.0478" | grep -q '"code":"Ok"'; then
+    if curl -s "http://localhost:5000/route/v1/driving/121.5170,25.0478;121.5170,25.0478" | grep -q '"code":"Ok"'; then
         echo "✅ OSRM 服務已成功啟動！"
-        echo "🌐 服務地址: http://localhost:5001"
-        echo "🗺️ 路由 API: http://localhost:5001/route/v1/driving/{coordinates}"
-        echo "📊 測試命令: curl 'http://localhost:5001/route/v1/driving/121.5170,25.0478;121.7534,24.7548'"
+        echo "🌐 服務地址: http://localhost:5000"
+        echo "🗺️ 路由 API: http://localhost:5000/route/v1/driving/{coordinates}"
+        echo "📊 測試命令: curl 'http://localhost:5000/route/v1/driving/121.5170,25.0478;121.7534,24.7548'"
         echo ""
         echo "💡 使用以下命令停止服務:"
         echo "   docker stop osrm-taiwan"

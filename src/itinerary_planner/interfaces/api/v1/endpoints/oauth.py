@@ -8,7 +8,7 @@ from typing import Optional
 
 from .....application.services.oauth_service import OAuthService
 from .....application.services.auth_service import AuthService
-from .....infrastructure.persistence.repositories.auth_repository import AuthRepository
+from .....infrastructure.repositories.user_repository import UserRepository
 from .....infrastructure.persistence.database import get_db
 from sqlalchemy.orm import Session
 
@@ -17,9 +17,9 @@ router = APIRouter(prefix="/auth/oauth", tags=["OAuth"])
 
 def get_oauth_service(db: Session = Depends(get_db)) -> OAuthService:
     """取得 OAuth 服務實例"""
-    auth_repository = AuthRepository(db)
-    auth_service = AuthService(auth_repository)
-    return OAuthService(auth_repository, auth_service)
+    user_repository = UserRepository(db)
+    auth_service = AuthService(db)
+    return OAuthService(user_repository, auth_service)
 
 
 @router.get("/google")

@@ -45,7 +45,8 @@ async def calculate_route(
     end_lon: float = Query(..., description="終點經度"),
     vehicle_type: str = Query("car", description="交通工具類型"),
     route_preference: str = Query("fastest", description="路線偏好"),
-    traffic_conditions: str = Query("normal", description="交通狀況")
+    traffic_conditions: str = Query("normal", description="交通狀況"),
+    alternatives: bool = Query(False, description="是否返回替代路線")
 ):
     """
     計算兩點間的路線
@@ -57,8 +58,11 @@ async def calculate_route(
     - **vehicle_type**: 交通工具類型 (car, motorcycle, bus)
     - **route_preference**: 路線偏好 (fastest, shortest, balanced)
     - **traffic_conditions**: 交通狀況 (normal, heavy, light)
+    - **alternatives**: 是否返回替代路線（預設 False，可加快速度）
     """
     try:
+        import time
+        request_start = time.time()
         logger.info(f"計算路由: ({start_lat}, {start_lon}) -> ({end_lat}, {end_lon}), 車輛: {vehicle_type}")
         
         # 驗證參數
@@ -68,26 +72,33 @@ async def calculate_route(
         if route_preference not in ["fastest", "shortest", "balanced"]:
             raise HTTPException(status_code=400, detail="不支援的路線偏好")
         
-        # 使用 OSRM 計算路線
-        start_point = (start_lat, start_lon)
-        end_point = (end_lat, end_lon)
-        
-        routes = await osrm_client.get_route_alternatives(
-            start_point, 
-            end_point, 
-            route_preference
-        )
-        
-        if not routes:
-            # 如果 OSRM 失敗，返回預設值
-            logger.warning("OSRM 路由計算失敗，使用預設值")
-            distance = 10000  # 預設 10 公里
-            duration = 1800   # 預設 30 分鐘
-        else:
-            # 使用第一條路線
-            route = routes[0]
-            distance = route.get("distance", 10000)
-            duration = route.get("duration", 1800)
+        # 直接調用 OSRM API（更快）
+        try:
+            coordinates = f"{start_lon},{start_lat};{end_lon},{end_lat}"
+            profile = "driving"
+            url = f"http://localhost:5000/route/v1/{profile}/{coordinates}"
+            params = {
+                "overview": "false",
+                "alternatives": "false" if not alternatives else "true",
+                "steps": "false"
+            }
+            
+            import httpx
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(url, params=params)
+                data = response.json()
+                
+                if data.get("code") == "Ok" and data.get("routes"):
+                    route = data["routes"][0]
+                    distance = route.get("distance", 10000)
+                    duration = route.get("duration", 1800)
+                else:
+                    distance = 10000
+                    duration = 1800
+        except Exception as e:
+            logger.warning(f"OSRM 調用失敗: {e}")
+            distance = 10000
+            duration = 1800
         
         # 計算碳排放
         carbon_service = CarbonCalculationService()
@@ -96,6 +107,9 @@ async def calculate_route(
             vehicle_type=vehicle_type,
             traffic_conditions=traffic_conditions
         )
+        
+        total_time = time.time() - request_start
+        logger.info(f"路由計算總耗時: {total_time:.3f}秒")
         
         return RouteCalculationResponse(
             duration=duration,

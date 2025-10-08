@@ -104,39 +104,59 @@ export function PlaceCard({
   };
 
   return (
-    <Card className="p-4 hover:shadow-lg transition-all duration-300 cursor-pointer group">
-      <div className="space-y-3">
-        {/* 圖片和基本資訊 */}
-        <div className="flex space-x-3">
-          {/* 景點圖片 */}
-          <div className="w-20 h-20 bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
-            {place.photo_url && !imageError ? (
-              <img
-                src={place.photo_url}
-                alt={place.name}
-                className="w-full h-full object-cover"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-slate-400">
-                {getCategoryIcon(place.categories)}
-              </div>
-            )}
+    <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group">
+      {/* 方型卡片佈局 */}
+      
+      {/* 景點圖片 - 頂部 */}
+      <div className="w-full h-48 bg-slate-200 dark:bg-slate-700 overflow-hidden relative">
+        {place.photo_url && !imageError ? (
+          <img
+            src={place.photo_url}
+            alt={place.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-400">
+            <div className="text-6xl">
+              {getCategoryIcon(place.categories)}
+            </div>
           </div>
+        )}
+        
+        {/* 收藏按鈕 - 右上角 */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onFavorite?.();
+          }}
+          className={`absolute top-3 right-3 p-2 rounded-full transition-colors backdrop-blur-sm ${
+            isFavorite
+              ? 'bg-red-500/80 text-white'
+              : 'bg-white/80 text-slate-400 hover:text-red-500'
+          }`}
+        >
+          <svg className="w-5 h-5" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </button>
+      </div>
 
-          {/* 景點資訊 */}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-slate-900 dark:text-white mb-1 group-hover:text-primary-600 transition-colors line-clamp-1">
-              {place.name}
-            </h3>
-            
-            <div className="flex items-center space-x-2 mb-2">
+      <div className="p-4 space-y-3">
+        {/* 景點名稱和基本資訊 */}
+        <div>
+          <h3 className="font-semibold text-lg text-slate-900 dark:text-white mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">
+            {place.name}
+          </h3>
+          
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
               {place.rating && (
                 <div className="flex items-center space-x-1">
                   <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
-                  <span className="text-sm text-slate-600 dark:text-slate-300">
+                  <span className="text-sm font-medium text-slate-900 dark:text-white">
                     {place.rating.toFixed(1)}
                   </span>
                 </div>
@@ -148,18 +168,18 @@ export function PlaceCard({
                 </span>
               )}
             </div>
+          </div>
 
-            {/* 類別標籤 */}
-            <div className="flex flex-wrap gap-1 mb-2">
-              {place.categories.slice(0, 2).map((category, index) => (
-                <span
-                  key={index}
-                  className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded text-xs"
-                >
-                  {category}
-                </span>
-              ))}
-            </div>
+          {/* 類別標籤 */}
+          <div className="flex flex-wrap gap-1 mb-3">
+            {place.categories.slice(0, 2).map((category, index) => (
+              <span
+                key={index}
+                className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded text-xs"
+              >
+                {category}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -241,60 +261,62 @@ export function PlaceCard({
         {/* 碳排放資訊 */}
         {place.carbon_emission && (
           <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-            <div className="text-xs font-medium text-green-800 dark:text-green-300 mb-1 flex items-center">
-              <span className="mr-1">🌱</span>
-              交通碳排放
+            <div className="text-xs font-medium text-green-800 dark:text-green-300 mb-1 flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="mr-1">🌱</span>
+                每人碳排放
+              </div>
+              <span className="text-[10px] text-green-600 dark:text-green-400">
+                最環保 👉 {
+                  place.carbon_emission.bus.perPerson < place.carbon_emission.car.perPerson && 
+                  place.carbon_emission.bus.perPerson < place.carbon_emission.motorcycle.perPerson ? '🚌' :
+                  place.carbon_emission.motorcycle.perPerson < place.carbon_emission.car.perPerson ? '🏍️' : '🚗'
+                }
+              </span>
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs text-green-700 dark:text-green-400">
-              <span className="flex items-center justify-center">
-                <span className="mr-1">🏍️</span>
-                機車: {place.carbon_emission.motorcycle.formatted}
-              </span>
-              <span className="flex items-center justify-center">
-                <span className="mr-1">🚗</span>
-                小客車: {place.carbon_emission.car.formatted}
-              </span>
-              <span className="flex items-center justify-center">
-                <span className="mr-1">🚌</span>
-                大客車: {place.carbon_emission.bus.formatted}
-              </span>
+              <div className="text-center">
+                <div className="font-medium">🏍️ 機車</div>
+                <div className="text-[11px]">{place.carbon_emission.motorcycle.formatted}</div>
+                <div className="text-[9px] text-green-600 dark:text-green-500">({place.carbon_emission.motorcycle.passengers}人)</div>
+              </div>
+              <div className="text-center">
+                <div className="font-medium">🚗 小客車</div>
+                <div className="text-[11px]">{place.carbon_emission.car.formatted}</div>
+                <div className="text-[9px] text-green-600 dark:text-green-500">({place.carbon_emission.car.passengers}人)</div>
+              </div>
+              <div className="text-center">
+                <div className="font-medium">🚌 大客車</div>
+                <div className="text-[11px]">{place.carbon_emission.bus.formatted}</div>
+                <div className="text-[9px] text-green-600 dark:text-green-500">({place.carbon_emission.bus.passengers}人)</div>
+              </div>
             </div>
           </div>
         )}
 
         {/* 操作按鈕 */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
-          <div className="flex space-x-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onViewDetail}
-              className="text-xs"
-            >
-              詳情
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onAddToTrip}
-              className="text-xs"
-            >
-              加入行程
-            </Button>
-          </div>
-          
-          <button
-            onClick={onFavorite}
-            className={`p-2 rounded-lg transition-colors ${
-              isFavorite
-                ? 'text-red-500 bg-red-50 dark:bg-red-900/20'
-                : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-            }`}
+        <div className="flex gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetail?.();
+            }}
+            className="flex-1 text-xs"
           >
-            <svg className="w-4 h-4" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
+            詳情
+          </Button>
+          <Button
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToTrip?.();
+            }}
+            className="flex-1 text-xs"
+          >
+            加入行程
+          </Button>
         </div>
       </div>
 

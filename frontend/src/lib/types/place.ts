@@ -3,16 +3,22 @@ export interface CarbonEmissionInfo {
     co2Grams: number;
     co2Kg: number;
     formatted: string;
+    perPerson: number;
+    passengers: number;
   };
   bus: {
     co2Grams: number;
     co2Kg: number;
     formatted: string;
+    perPerson: number;
+    passengers: number;
   };
   motorcycle: {
     co2Grams: number;
     co2Kg: number;
     formatted: string;
+    perPerson: number;
+    passengers: number;
   };
 }
 

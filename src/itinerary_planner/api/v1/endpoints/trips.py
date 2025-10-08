@@ -58,7 +58,7 @@ async def save_trip(
         is_public=request.is_public
     )
     
-    return TripDetailResponse.from_orm(trip)
+    return TripDetailResponse.model_validate(trip)
 
 
 @router.get("", response_model=TripListResponse)
@@ -81,7 +81,7 @@ async def get_my_trips(
     )
     
     return TripListResponse(
-        trips=[TripSummaryResponse.from_orm(trip) for trip in result['trips']],
+        trips=[TripSummaryResponse.model_validate(trip) for trip in result['trips']],
         total=result['total'],
         page=result['page'],
         page_size=result['page_size'],
@@ -100,7 +100,13 @@ async def get_trip(
     
     只能查看自己的行程或公開的行程
     """
-    trip = trip_service.get_trip(trip_id, str(current_user.id))
+    try:
+        trip = trip_service.get_trip(trip_id, str(current_user.id))
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="無權限存取此行程"
+        )
     
     if not trip:
         raise HTTPException(
@@ -108,7 +114,7 @@ async def get_trip(
             detail="行程不存在或無權限查看"
         )
     
-    return TripDetailResponse.from_orm(trip)
+    return TripDetailResponse.model_validate(trip)
 
 
 @router.put("/{trip_id}", response_model=TripDetailResponse)
@@ -124,7 +130,7 @@ async def update_trip(
     只能更新自己的行程
     """
     # 只更新有提供的欄位
-    update_data = request.dict(exclude_none=True)
+    update_data = request.model_dump(exclude_none=True)
     
     trip = trip_service.update_trip(
         trip_id=trip_id,
@@ -138,7 +144,7 @@ async def update_trip(
             detail="行程不存在或無權限修改"
         )
     
-    return TripDetailResponse.from_orm(trip)
+    return TripDetailResponse.model_validate(trip)
 
 
 @router.delete("/{trip_id}", response_model=MessageResponse)
@@ -219,7 +225,7 @@ async def get_public_trip(
             detail="分享連結無效或行程不存在"
         )
     
-    return TripDetailResponse.from_orm(trip)
+    return TripDetailResponse.model_validate(trip)
 
 
 @router.post("/{trip_id}/copy", response_model=TripDetailResponse)
@@ -248,4 +254,4 @@ async def copy_trip(
             detail="行程不存在或無法複製"
         )
     
-    return TripDetailResponse.from_orm(new_trip)
+    return TripDetailResponse.model_validate(new_trip)

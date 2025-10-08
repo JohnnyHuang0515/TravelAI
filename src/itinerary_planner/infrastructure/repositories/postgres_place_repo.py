@@ -52,11 +52,19 @@ class PostgresPlaceRepository(PlaceRepository):
 
     def search_by_vector(self, embedding: List[float], top_k: int = 50) -> List[OrmPlace]:
         """
-        根據向量相似度搜索地點。
-        注意：embedding 功能暫時停用，因為資料庫中沒有 embedding 欄位
+        根據向量相似度搜索地點
         """
-        # 暫時返回空列表，因為資料庫中沒有 embedding 欄位
-        return []
+        if not embedding:
+            return []
+        
+        # 使用 pgvector 的餘弦相似度搜尋
+        query = self.db.query(OrmPlace).filter(
+            OrmPlace.embedding.isnot(None)
+        ).order_by(
+            OrmPlace.embedding.cosine_distance(embedding)
+        ).limit(top_k)
+        
+        return query.all()
 
     def get_hours_for_places(self, place_ids: List[str]) -> Dict[str, List[OrmHour]]:
         """

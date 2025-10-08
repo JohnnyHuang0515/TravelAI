@@ -18,14 +18,15 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, description="密碼至少 8 個字元")
     username: Optional[str] = None
     
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "email": "user@example.com",
                 "password": "securePassword123",
                 "username": "traveler_john"
             }
         }
+    }
 
 
 class LoginRequest(BaseModel):
@@ -33,13 +34,14 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
     
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "email": "user@example.com",
                 "password": "securePassword123"
             }
         }
+    }
 
 
 class RefreshTokenRequest(BaseModel):
@@ -146,12 +148,13 @@ class MessageResponse(BaseModel):
     """通用訊息回應"""
     message: str
     
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "message": "操作成功"
             }
         }
+    }
 
 
 # ============================================================================
@@ -167,9 +170,9 @@ class UserPreferenceResponse(BaseModel):
     default_daily_end: str
     custom_settings: dict
     
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+    model_config = {
+        "from_attributes": True,
+        "json_schema_extra": {
             "example": {
                 "favorite_themes": ["美食", "自然", "文化"],
                 "travel_pace": "moderate",
@@ -179,6 +182,7 @@ class UserPreferenceResponse(BaseModel):
                 "custom_settings": {}
             }
         }
+    }
 
 
 class UpdatePreferenceRequest(BaseModel):

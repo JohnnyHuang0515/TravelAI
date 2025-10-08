@@ -5,8 +5,8 @@ class EmbeddingClient:
     """向量嵌入客戶端，用於生成文字嵌入"""
     
     def __init__(self):
-        # 使用輕量級的模型
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        # 使用支援中文的模型
+        self.model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
     
     def get_embedding(self, text: str) -> list:
         """

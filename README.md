@@ -4,6 +4,14 @@
 
 ## 🚀 快速開始
 
+### 推薦啟動順序
+
+1. **啟動基礎服務**（PostgreSQL, Redis）
+2. **匯入資料**（首次使用）
+3. **啟動 OSRM**（路由服務）
+4. **啟動後端 API**
+5. **啟動前端**
+
 ### 使用 uv 管理（推薦）
 
 ```bash
@@ -26,7 +34,19 @@ git clone <repository-url>
 cd TravelAI
 
 # 一鍵啟動所有服務
-./scripts/start.sh
+bash scripts/start.sh
+```
+
+### 開發環境啟動
+
+```bash
+# 啟動開發環境（不使用 Docker）
+bash scripts/start_dev.sh
+
+# 或手動啟動
+source .venv/bin/activate
+source .env
+python3 -m uvicorn src.itinerary_planner.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### 手動啟動
@@ -60,19 +80,28 @@ docker-compose logs -f
 
 ### 後端服務
 - **FastAPI**: Python Web 框架
-- **PostgreSQL + PostGIS**: 地理空間資料庫
+- **PostgreSQL + PostGIS + pgvector**: 地理空間與向量資料庫
 - **Redis**: 快取和會話存儲
 - **OSRM**: 路線規劃引擎
 
 ### 前端服務
-- **Next.js 14**: React 框架
+- **Next.js 14**: React 框架（App Router）
 - **Tailwind CSS**: 樣式框架
 - **Zustand**: 狀態管理
+- **Leaflet**: 地圖顯示
 
 ### AI 服務
 - **Google Gemini**: 行程規劃 AI
+- **Sentence Transformers**: 多語言語義嵌入
 - **LangChain**: AI 應用框架
 - **LangGraph**: AI 工作流程
+
+### 資料處理管道
+- **統一匯入系統**: 一次完成所有資料處理
+- **地址解析**: 結構化地址與座標獲取
+- **語境增強**: 自動生成活動類型、價格等級等元資料
+- **智能去重**: 自動檢測並處理重複資料
+- **向量嵌入**: 支援語義搜尋
 
 ## 🔧 服務配置
 
@@ -114,30 +143,81 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 3. **建立資料表** - 根據 ORM 模型建立所有表
 4. **執行遷移** - 執行資料庫結構更新
 
-### 手動初始化
+### 資料匯入
+
+#### **統一資料匯入系統**
+
+本專案使用智能資料處理管道，在匯入時自動完成：
+- ✅ 地址解析與座標獲取
+- ✅ 語境增強（活動類型、價格等級等）
+- ✅ Embedding 生成（支援語義搜尋）
+- ✅ 智能去重（避免重複資料）
+- ✅ 環保認證標記
 
 ```bash
-# 進入 API 容器
-docker-compose exec api bash
+# 完整匯入（會清除舊資料）
+python3 scripts/unified_data_importer.py
 
-# 執行初始化腳本
-python3 scripts/init_database.py
+# 查看資料統計
+python3 -c "
+import sys
+sys.path.append('src')
+from itinerary_planner.infrastructure.persistence.database import SessionLocal
+from itinerary_planner.infrastructure.persistence.orm_models import Place, Accommodation
+
+db = SessionLocal()
+print(f'地點: {db.query(Place).count()} 筆')
+print(f'住宿: {db.query(Accommodation).count()} 筆')
+db.close()
+"
 ```
 
-## 🗺️ OSRM 資料準備
+#### **資料覆蓋範圍**
 
-### 下載台灣地圖資料
+- 🗺️ **全台灣** 16,584 筆旅遊資料
+- 📍 **地點**: 4,594 筆（95% 有座標）
+  - 環保餐廳 4,380 筆
+  - 環境教育設施 267 筆
+  - 宜蘭縣景點 96 筆
+- 🏨 **住宿**: 2,523 筆（100% 有座標）
+  - 環保標章旅館 174 筆
+  - 宜蘭縣住宿 2,350 筆
+- 🌱 **環保認證**: 4,327 筆高品質資料
+
+## 🗺️ OSRM 路由服務
+
+### 啟動 OSRM 服務
+
+```bash
+# 使用腳本啟動
+bash scripts/start_real_osrm.sh
+
+# 或使用 Docker Compose（會自動處理）
+docker-compose up -d osrm-backend
+```
+
+### 準備台灣地圖資料
 
 ```bash
 # 執行 OSRM 資料處理腳本
-./process_osrm.sh
+bash process_osrm.sh
 ```
 
-### 手動下載
-
+此腳本會：
 1. 下載台灣 OpenStreetMap 資料
-2. 使用 OSRM 工具處理
-3. 將處理後的檔案放入 `data/osrm/` 目錄
+2. 使用 OSRM 工具處理（extract → partition → customize）
+3. 生成可用的路由資料檔案
+
+### 手動處理
+
+1. 下載台灣 OSM 資料：`taiwan-latest.osm.pbf`
+2. 執行 OSRM 處理流程：
+   ```bash
+   docker run -t -v "${PWD}/data/osrm:/data" osrm/osrm-backend osrm-extract -p /opt/car.lua /data/taiwan.osm.pbf
+   docker run -t -v "${PWD}/data/osrm:/data" osrm/osrm-backend osrm-partition /data/taiwan.osrm
+   docker run -t -v "${PWD}/data/osrm:/data" osrm/osrm-backend osrm-customize /data/taiwan.osrm
+   ```
+3. 啟動服務：`bash scripts/start_real_osrm.sh`
 
 ## 🔐 認證系統
 
@@ -252,27 +332,24 @@ uv lock
 
 ### 專案結構
 
+詳細結構請參考 [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
+
 ```
 TravelAI/
 ├── src/                    # 後端源碼
 │   └── itinerary_planner/
 │       ├── api/           # API 路由
-│       ├── core/          # 核心邏輯
-│       ├── infrastructure/ # 基礎設施
-│       └── main.py        # 應用入口
+│       ├── application/   # 業務邏輯服務
+│       ├── infrastructure/ # 基礎設施層
+│       └── interfaces/    # 介面定義
 ├── frontend/              # 前端應用
-│   ├── src/
-│   │   ├── app/          # Next.js App Router
-│   │   ├── components/   # React 組件
-│   │   ├── lib/          # 工具函數
-│   │   └── stores/       # 狀態管理
 ├── scripts/               # 工具腳本
+│   └── unified_data_importer.py # 統一資料匯入器
 ├── migrations/            # 資料庫遷移
 ├── data/                  # 資料檔案
-├── pyproject.toml         # Python 專案配置
-├── uv.lock               # 依賴鎖定檔
-├── .venv/                # 虛擬環境（不提交）
-└── docker-compose.yml     # 服務配置
+├── docs/                  # 專案文檔
+├── tests/                 # 測試代碼
+└── 配置檔案...
 ```
 
 ### 新增功能
@@ -310,6 +387,19 @@ docker-compose -f docker-compose.prod.yml up -d
 - `GOOGLE_API_KEY`: AI 服務金鑰
 - `JWT_SECRET_KEY`: JWT 簽名密鑰
 
+## 🧹 專案清理
+
+本專案已進行大規模整理，移除了：
+- ❌ 重複的資料處理腳本
+- ❌ 舊的對話模式 API
+- ❌ 未使用的測試檔案
+- ❌ 臨時檔案
+
+現在採用：
+- ✅ 統一資料匯入系統
+- ✅ 單一對話引擎（`/v1/conversation`）
+- ✅ 清晰的專案結構
+
 ## 🤝 貢獻指南
 
 1. Fork 專案
@@ -327,13 +417,34 @@ MIT License
 A: 檢查 PostgreSQL 服務是否正常啟動，確認環境變數設定正確。
 
 ### Q: OSRM 服務無法啟動
-A: 確認 `data/osrm/` 目錄包含正確的 OSRM 資料檔案。
+A: 
+1. 確認 `data/osrm/` 目錄包含正確的 OSRM 資料檔案
+2. 執行 `bash process_osrm.sh` 下載並處理地圖資料
+3. 確認 Docker 有足夠的記憶體（建議 8GB+）
+
+### Q: OSRM 路由計算超時 (504)
+A:
+1. 確認 OSRM 服務正常運行：`curl http://localhost:5000/route/v1/driving/121.5,25.0;121.5,25.0`
+2. 檢查環境變數：`OSRM_HOST=http://localhost:5000`
+3. 重啟後端服務載入新配置
 
 ### Q: 前端無法連接後端
 A: 檢查 CORS 設定和 API 服務狀態。
 
 ### Q: Google OAuth 登入失敗
 A: 確認 Google Cloud Console 設定和重定向 URI 配置。
+
+### Q: 推薦景點沒有顯示
+A:
+1. 確認資料已匯入：`python3 scripts/unified_data_importer.py`
+2. 檢查座標覆蓋率（應 >95%）
+3. 驗證 API：`curl "http://localhost:8000/v1/places/nearby?lat=24.7&lon=121.7&radius=50000&limit=5"`
+
+### Q: 地圖上景點無法顯示
+A: 
+1. 檢查資料是否有座標
+2. 確認前端能正確調用 `/v1/places/nearby` API
+3. 查看瀏覽器控制台是否有錯誤
 
 ## 📞 支援
 

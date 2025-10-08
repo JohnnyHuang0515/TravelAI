@@ -1,4 +1,4 @@
-from langgraph.graph import StateGraph, END, START
+from langgraph.graph import StateGraph, END
 from .graph_state import AppState
 from .graph_nodes import GraphNodes
 
@@ -19,7 +19,7 @@ workflow.add_node("retrieve_accommodations", nodes.retrieve_accommodations)
 workflow.add_node("plan_itinerary", nodes.plan_itinerary)
 
 # 設定圖的邊 - 支援對話式流程
-workflow.add_edge(START, "conversation_memory_manager")
+workflow.set_entry_point("conversation_memory_manager")
 workflow.add_edge("conversation_memory_manager", "info_collector")
 
 # 條件分支：如果資訊完整則進入規劃，否則結束對話

@@ -2,16 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChatPanel, ItineraryPanel } from "@/components/planning";
+import { ItineraryPanel } from "@/components/planning";
+import { UnifiedChatPanel } from "@/components/conversation/UnifiedChatPanel";
 import { AppLayout } from "@/components/layout";
 
-interface ChatMessage {
-  id: string;
-  type: 'user' | 'ai' | 'system';
-  content: string;
-  timestamp: Date;
-  suggestions?: string[];
-}
 
 interface Preferences {
   destination: string;
@@ -47,261 +41,186 @@ interface Itinerary {
 export default function PlanResultPage() {
   const router = useRouter();
   const [preferences, setPreferences] = useState<Preferences>({
-    destination: "台北市",
-    startDate: "2024-02-15",
-    endDate: "2024-02-17",
-    duration: 3,
-    interests: ["food", "culture"],
+    destination: "",
+    startDate: "",
+    endDate: "",
+    duration: 1,
+    interests: [],
     budget: "moderate",
     pace: "moderate"
   });
   
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isChatLoading, setIsChatLoading] = useState(false);
-  const [keywords, setKeywords] = useState<string[]>([]);
-  const [conversationSummary, setConversationSummary] = useState<string>("");
-  const [smartSuggestions, setSmartSuggestions] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 初始化歡迎訊息
-    const welcomeMessage: ChatMessage = {
-      id: 'welcome',
-      type: 'ai',
-      content: '您好！我是您的 AI 旅遊助手。我已經根據您的偏好開始規劃行程，您可以隨時告訴我任何調整需求。',
-      timestamp: new Date(),
-      suggestions: [
-        "我想增加一個美食景點",
-        "調整行程時間",
-        "推薦附近的住宿"
-      ]
-    };
-    setMessages([welcomeMessage]);
-
-    // 模擬生成初始行程
-    generateInitialItinerary();
+    // 從 localStorage 載入用戶偏好
+    loadUserPreferences();
   }, []);
 
-  const generateInitialItinerary = async () => {
+  const loadUserPreferences = async () => {
+    try {
+      setIsLoading(true);
+      
+      // 從 localStorage 獲取規劃表單數據
+      const planningFormData = localStorage.getItem("planningForm");
+      if (planningFormData) {
+        const formData = JSON.parse(planningFormData);
+        setPreferences({
+          destination: formData.destination || "",
+          startDate: formData.startDate || "",
+          endDate: formData.endDate || "",
+          duration: formData.days || 1,
+          interests: formData.interests || [],
+          budget: formData.budget || "moderate",
+          pace: formData.pace || "moderate"
+        });
+        
+        // 載入偏好後生成初始行程
+        await generateInitialItinerary(formData);
+      } else {
+        // 如果沒有偏好數據，重定向到規劃頁面
+        router.push("/plan/start");
+        return;
+      }
+    } catch (error) {
+      console.error("載入用戶偏好失敗:", error);
+      router.push("/plan/start");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateInitialItinerary = async (formData?: any) => {
+    if (!formData && !preferences.destination) {
+      return;
+    }
+
+    const userPrefs = formData || preferences;
     setIsGenerating(true);
     
-    // 模擬 API 呼叫
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const mockItinerary: Itinerary = {
-      days: [
-        {
-          day: 1,
-          date: "2024-02-15",
-          visits: [
-            {
-              place_id: "1",
-              name: "台北101",
-              eta: "09:00",
-              etd: "11:00",
-              travel_minutes: 0,
-              stay_minutes: 120
-            },
-            {
-              place_id: "2",
-              name: "信義商圈",
-              eta: "11:30",
-              etd: "14:30",
-              travel_minutes: 30,
-              stay_minutes: 180
-            },
-            {
-              place_id: "3",
-              name: "松山文創園區",
-              eta: "15:00",
-              etd: "17:00",
-              travel_minutes: 30,
-              stay_minutes: 120
-            }
-          ],
-          accommodation: {
-            name: "台北君悅酒店",
-            address: "台北市信義區松仁路100號",
-            rating: 4.5,
-            price: 8000
-          }
-        },
-        {
-          day: 2,
-          date: "2024-02-16",
-          visits: [
-            {
-              place_id: "4",
-              name: "故宮博物院",
-              eta: "09:00",
-              etd: "12:00",
-              travel_minutes: 0,
-              stay_minutes: 180
-            },
-            {
-              place_id: "5",
-              name: "士林夜市",
-              eta: "18:00",
-              etd: "21:00",
-              travel_minutes: 60,
-              stay_minutes: 180
-            }
-          ],
-          accommodation: {
-            name: "台北君悅酒店",
-            address: "台北市信義區松仁路100號",
-            rating: 4.5,
-            price: 8000
-          }
-        },
-        {
-          day: 3,
-          date: "2024-02-17",
-          visits: [
-            {
-              place_id: "6",
-              name: "九份老街",
-              eta: "09:00",
-              etd: "15:00",
-              travel_minutes: 0,
-              stay_minutes: 360
-            }
-          ]
-        }
-      ]
-    };
+    try {
+      // 初始化歡迎訊息將在 UnifiedChatPanel 中處理
 
-    setItinerary(mockItinerary);
-    setIsGenerating(false);
-  };
-
-
-  const handleGenerateItinerary = async () => {
-    setIsGenerating(true);
-    
-    // 新增系統訊息
-    const systemMessage: ChatMessage = {
-      id: `system-${Date.now()}`,
-      type: 'system',
-      content: '正在根據您的偏好重新生成行程...',
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, systemMessage]);
-
-    // 模擬 API 呼叫
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // 重新生成行程
-    await generateInitialItinerary();
-    
-    // 新增完成訊息
-    const completeMessage: ChatMessage = {
-      id: `ai-${Date.now()}`,
-      type: 'ai',
-      content: '行程已重新生成！請查看右側的詳細安排，有任何需要調整的地方請告訴我。',
-      timestamp: new Date(),
-      suggestions: [
-        "我想增加一個美食景點",
-        "調整某個景點的時間",
-        "推薦更好的住宿選項"
-      ]
-    };
-    setMessages(prev => [...prev, completeMessage]);
-  };
-
-  const extractKeywords = (text: string): string[] => {
-    // 簡單的關鍵詞提取邏輯，可以根據需要擴展
-    const commonKeywords = ['美食', '文化', '購物', '自然', '歷史', '夜市', '博物館', '公園', '寺廟', '餐廳', '咖啡廳', '酒吧', '溫泉', '海邊', '山區', '古蹟', '藝術', '音樂', '運動', '冒險', '放鬆'];
-    const extracted = commonKeywords.filter(keyword => text.includes(keyword));
-    return extracted;
-  };
-
-  const updateConversationSummary = (newMessage: string) => {
-    // 簡單的對話摘要更新邏輯
-    const userMessages = messages.filter(msg => msg.type === 'user');
-    if (userMessages.length >= 2) {
-      setConversationSummary("您已提出多項需求，AI 正在為您整合最佳行程方案");
-    } else if (userMessages.length === 1) {
-      setConversationSummary("您已開始與 AI 討論行程細節");
-    } else {
-      setConversationSummary("歡迎開始與 AI 討論您的行程需求");
+      // 調用統一對話引擎生成初始行程
+      const sessionId = `unified_${Date.now()}`;
+      const initialMessage = `我想去${userPrefs.destination}旅遊${userPrefs.days}天，我的興趣是${userPrefs.interests.join('、')}，預算等級是${userPrefs.budget}，行程節奏希望${userPrefs.pace}。請為我規劃一個完整的行程。`;
+      
+      // 這裡可以調用統一對話 API 來生成真實的行程
+      // 暫時使用模擬數據，但會根據用戶偏好調整
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const mockItinerary = generateMockItineraryBasedOnPreferences(userPrefs);
+      setItinerary(mockItinerary);
+      
+    } catch (error) {
+      console.error("生成初始行程失敗:", error);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
-  const generateSmartSuggestions = (keywords: string[]) => {
-    // 基於關鍵詞生成智能建議
-    const suggestions: string[] = [];
+  const generateMockItineraryBasedOnPreferences = (prefs: any): Itinerary => {
+    // 根據用戶偏好生成模擬行程
+    const days = [];
+    const startDate = new Date(prefs.startDate);
     
-    if (keywords.includes('美食')) {
-      suggestions.push("推薦當地特色餐廳");
+    for (let i = 0; i < prefs.days; i++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + i);
+      
+      const visits = [];
+      
+      // 根據興趣生成景點
+      if (prefs.interests.includes('food')) {
+        visits.push({
+          place_id: `${i}-1`,
+          name: `${prefs.destination}美食街`,
+          eta: "12:00",
+          etd: "14:00",
+          travel_minutes: 0,
+          stay_minutes: 120
+        });
+      }
+      
+      if (prefs.interests.includes('culture')) {
+        visits.push({
+          place_id: `${i}-2`,
+          name: `${prefs.destination}文化景點`,
+          eta: "09:00",
+          etd: "11:30",
+          travel_minutes: 0,
+          stay_minutes: 150
+        });
+      }
+      
+      if (prefs.interests.includes('nature')) {
+        visits.push({
+          place_id: `${i}-3`,
+          name: `${prefs.destination}自然景觀`,
+          eta: "15:00",
+          etd: "17:30",
+          travel_minutes: 30,
+          stay_minutes: 150
+        });
+      }
+      
+      if (prefs.interests.includes('shopping')) {
+        visits.push({
+          place_id: `${i}-4`,
+          name: `${prefs.destination}購物中心`,
+          eta: "18:00",
+          etd: "20:00",
+          travel_minutes: 15,
+          stay_minutes: 120
+        });
+      }
+      
+      // 如果沒有選擇興趣，添加預設景點
+      if (visits.length === 0) {
+        visits.push({
+          place_id: `${i}-default`,
+          name: `${prefs.destination}著名景點`,
+          eta: "10:00",
+          etd: "16:00",
+          travel_minutes: 0,
+          stay_minutes: 360
+        });
+      }
+      
+      const dayItinerary = {
+        day: i + 1,
+        date: currentDate.toISOString().split('T')[0],
+        visits: visits,
+        accommodation: i === 0 ? {
+          name: `${prefs.destination}精選酒店`,
+          address: `${prefs.destination}市中心`,
+          rating: prefs.budget === 'luxury' ? 4.8 : prefs.budget === 'budget' ? 4.2 : 4.5,
+          price: prefs.budget === 'luxury' ? 12000 : prefs.budget === 'budget' ? 3000 : 6000
+        } : undefined
+      };
+      
+      days.push(dayItinerary);
     }
-    if (keywords.includes('文化')) {
-      suggestions.push("安排博物館參觀");
-    }
-    if (keywords.includes('自然')) {
-      suggestions.push("規劃戶外景點");
-    }
-    if (keywords.includes('夜市')) {
-      suggestions.push("安排夜市美食之旅");
-    }
-    if (keywords.includes('溫泉')) {
-      suggestions.push("加入溫泉放鬆行程");
-    }
-    
-    // 預設建議
-    if (suggestions.length === 0) {
-      suggestions.push("調整行程時間安排", "推薦附近景點", "優化交通路線");
-    }
-    
-    return suggestions.slice(0, 3); // 最多顯示3個建議
+
+    return { days };
   };
 
-  const handleSendMessage = async (message: string) => {
-    // 新增使用者訊息
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      type: 'user',
-      content: message,
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, userMessage]);
-    setIsChatLoading(true);
 
-    // 提取關鍵詞
-    const newKeywords = extractKeywords(message);
-    if (newKeywords.length > 0) {
-      setKeywords(prev => {
-        const combined = [...prev, ...newKeywords];
-        return Array.from(new Set(combined)); // 去重
-      });
-    }
-
-    // 更新對話摘要
-    updateConversationSummary(message);
-
-    // 生成智能建議
-    const updatedKeywords = [...keywords, ...newKeywords];
-    const suggestions = generateSmartSuggestions(updatedKeywords);
-    setSmartSuggestions(suggestions);
-
-    // 模擬 AI 回應
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const aiMessage: ChatMessage = {
-      id: `ai-${Date.now()}`,
-      type: 'ai',
-      content: '我了解您的需求，正在為您調整行程。請稍等片刻，我會為您提供最佳的解決方案。',
-      timestamp: new Date(),
-      suggestions: [
-        "查看調整後的行程",
-        "還有其他需求嗎？",
-        "儲存這個行程"
-      ]
-    };
-    setMessages(prev => [...prev, aiMessage]);
-    setIsChatLoading(false);
-  };
+  // 載入狀態顯示
+  if (isLoading) {
+    return (
+      <AppLayout showFooter={false} className="h-screen">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-slate-600 dark:text-slate-400">正在載入您的行程偏好...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const handleSaveItinerary = () => {
     alert("行程儲存功能開發中...");
@@ -326,7 +245,7 @@ export default function PlanResultPage() {
               </svg>
             </button>
             <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-              AI 行程規劃助手
+              AI 旅遊助手
             </h1>
           </div>
           
@@ -342,71 +261,9 @@ export default function PlanResultPage() {
 
       {/* 主要內容區域 */}
       <div className="flex-1 flex overflow-hidden">
-        {/* 左側：對話摘要面板 */}
+        {/* 左側：行程摘要面板 */}
         <div className="w-80 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-6">
           <div className="space-y-6">
-            {/* 對話摘要 */}
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                對話摘要
-              </h3>
-              <div className="p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                  {conversationSummary || "歡迎開始與 AI 討論您的行程需求"}
-                </p>
-              </div>
-            </div>
-
-            {/* 對話關鍵詞 */}
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                對話關鍵詞
-              </h3>
-              <div className="space-y-3">
-                {keywords.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {keywords.map((keyword, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSendMessage(`我想了解更多關於${keyword}的資訊`)}
-                        className="px-3 py-1 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 text-sm rounded-full hover:bg-primary-200 dark:hover:bg-primary-900/30 transition-colors cursor-pointer"
-                      >
-                        {keyword}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-slate-500 dark:text-slate-400 italic">
-                    開始對話後，關鍵詞會自動出現在這裡
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 智能建議 */}
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                智能建議
-              </h3>
-              <div className="space-y-2">
-                {smartSuggestions.length > 0 ? (
-                  smartSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSendMessage(suggestion)}
-                      className="w-full text-left px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg transition-colors"
-                    >
-                      💡 {suggestion}
-                    </button>
-                  ))
-                ) : (
-                  <div className="text-sm text-slate-500 dark:text-slate-400 italic">
-                    基於您的對話內容提供建議
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* 行程摘要 */}
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
@@ -428,6 +285,59 @@ export default function PlanResultPage() {
                      preferences.budget === 'medium' ? '中等' : '豪華型'}
                   </div>
                 </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                  <div className="text-sm text-slate-600 dark:text-slate-400">行程節奏</div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">
+                    {preferences.pace === 'relaxed' ? '悠閒' : 
+                     preferences.pace === 'moderate' ? '適中' : '緊湊'}
+                  </div>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                  <div className="text-sm text-slate-600 dark:text-slate-400">興趣偏好</div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">
+                    {preferences.interests.length > 0 ? 
+                      preferences.interests.map(interest => {
+                        const labels: {[key: string]: string} = {
+                          'food': '美食',
+                          'nature': '自然',
+                          'culture': '文化',
+                          'shopping': '購物',
+                          'adventure': '冒險',
+                          'relaxation': '放鬆'
+                        };
+                        return labels[interest] || interest;
+                      }).join('、') : 
+                      '未設定'
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 快速操作 */}
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                快速操作
+              </h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => router.push("/plan/start")}
+                  className="w-full text-left px-3 py-2 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 text-sm rounded-lg hover:bg-primary-200 dark:hover:bg-primary-900/30 transition-colors"
+                >
+                  ✏️ 重新設定偏好
+                </button>
+                <button
+                  onClick={handleSaveItinerary}
+                  className="w-full text-left px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg transition-colors"
+                >
+                  💾 儲存行程
+                </button>
+                <button
+                  onClick={handleDownloadItinerary}
+                  className="w-full text-left px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm rounded-lg transition-colors"
+                >
+                  📄 下載行程
+                </button>
               </div>
             </div>
           </div>
@@ -435,10 +345,16 @@ export default function PlanResultPage() {
 
         {/* 中間：對話面板 */}
         <div className="flex-1 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700">
-          <ChatPanel
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            isLoading={isChatLoading}
+          <UnifiedChatPanel
+            sessionId={`unified_${Date.now()}`}
+            onItineraryGenerated={(itinerary) => {
+              setItinerary(itinerary);
+              console.log('Generated itinerary:', itinerary);
+            }}
+            onError={(error) => {
+              console.error('Chat error:', error);
+            }}
+            className="h-full"
           />
         </div>
 

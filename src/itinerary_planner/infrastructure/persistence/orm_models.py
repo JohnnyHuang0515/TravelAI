@@ -42,6 +42,7 @@ class Place(Base):
     source = Column(String(50))
     source_id = Column(String(255))
     place_metadata = Column(JSONB)
+    embedding = Column(Vector(384))  # 向量嵌入支援語義搜尋
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -80,6 +81,7 @@ class Accommodation(Base):
     address = Column(Text)
     phone = Column(String)
     website = Column(String)
+    embedding = Column(Vector(384))  # 向量嵌入支援語義搜尋
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -100,8 +102,7 @@ class User(Base):
     username = Column(String(100))
     password_hash = Column(String(255))  # bcrypt 雜湊
     provider = Column(String(50))  # 'email', 'google', 'facebook'
-    provider_id = Column(String(255))  # OAuth provider ID
-    google_id = Column(String(255), unique=True, index=True)  # Google OAuth ID
+    provider_id = Column(String(255))  # OAuth provider ID (統一使用此欄位)
     avatar_url = Column(String(500))  # 使用者頭像 URL
     profile = Column(JSONB, default=dict)  # {phone, bio, ...}
     created_at = Column(DateTime, default=datetime.utcnow)
