@@ -58,7 +58,7 @@ services:
   osrm-backend:
     image: osrm/osrm-backend:v5.22.0
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - ./data/osrm:/data:ro
     command: osrm-routed --algorithm mld /data/taiwan-250923.osrm
