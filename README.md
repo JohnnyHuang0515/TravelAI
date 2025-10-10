@@ -32,14 +32,19 @@ cd TravelAI
 ### 手動啟動
 
 ```bash
-# 啟動所有服務
-docker-compose up -d
+# 1. 啟動後端服務（PostgreSQL, Redis, OSRM, API）
+docker-compose -p travelai up -d
+
+# 2. 啟動前端服務
+cd frontend
+npm install  # 首次執行需要安裝依賴
+npm run dev
 
 # 查看服務狀態
-docker-compose ps
+docker-compose -p travelai ps
 
 # 查看日誌
-docker-compose logs -f
+docker-compose -p travelai logs -f
 ```
 
 ## 📋 系統需求
@@ -103,7 +108,9 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 | 前端 | 3000 | Next.js 前端應用 |
 | 資料庫 | 5432 | PostgreSQL 資料庫 |
 | Redis | 6379 | Redis 快取 |
-| OSRM | 5000 | 路線規劃服務 |
+| OSRM | 5001 | 路線規劃服務 |
+
+> **注意**: OSRM 使用 5001 端口而非 5000，因為 macOS 的 5000 端口通常被 AirPlay/控制中心佔用。
 
 ## 📊 資料庫初始化
 
@@ -199,11 +206,11 @@ npm test
 
 ```bash
 # 所有服務
-docker-compose logs -f
+docker-compose -p travelai logs -f
 
 # 特定服務
-docker-compose logs -f api
-docker-compose logs -f postgres
+docker-compose -p travelai logs -f api
+docker-compose -p travelai logs -f postgres
 ```
 
 ### 健康檢查
@@ -328,6 +335,9 @@ A: 檢查 PostgreSQL 服務是否正常啟動，確認環境變數設定正確�
 
 ### Q: OSRM 服務無法啟動
 A: 確認 `data/osrm/` 目錄包含正確的 OSRM 資料檔案。
+
+### Q: 5000 端口被佔用
+A: macOS 系統的 AirPlay 服務佔用了 5000 端口。本專案已將 OSRM 改用 5001 端口。
 
 ### Q: 前端無法連接後端
 A: 檢查 CORS 設定和 API 服務狀態。
