@@ -24,7 +24,7 @@ python3 scripts/run_migration.py 001_create_user_system_tables
 
 ```bash
 # 確保資料庫已啟動
-docker-compose up -d db redis
+docker compose up -d db redis
 
 # 啟動 API 服務
 python3 start_server.py

@@ -147,7 +147,7 @@ COMMIT;
 
 ```bash
 # 1. 確保資料庫已啟動
-docker-compose up -d db
+docker compose up -d db
 
 # 2. 設定環境變數
 export DATABASE_URL="postgresql://postgres:password@localhost:5432/itinerary_db"

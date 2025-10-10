@@ -33,7 +33,7 @@ cd TravelAI
 
 ```bash
 # 1. 啟動後端服務（PostgreSQL, Redis, OSRM, API）
-docker-compose -p travelai up -d
+docker compose -p travelai up -d
 
 # 2. 啟動前端服務
 cd frontend
@@ -41,10 +41,10 @@ npm install  # 首次執行需要安裝依賴
 npm run dev
 
 # 查看服務狀態
-docker-compose -p travelai ps
+docker compose -p travelai ps
 
 # 查看日誌
-docker-compose -p travelai logs -f
+docker compose -p travelai logs -f
 ```
 
 ## 📋 系統需求
@@ -125,7 +125,7 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 
 ```bash
 # 進入 API 容器
-docker-compose exec api bash
+docker compose exec api bash
 
 # 執行初始化腳本
 python3 scripts/init_database.py
@@ -189,7 +189,7 @@ npm run dev
 uv run pytest tests/
 
 # 或進入 API 容器執行測試
-docker-compose exec api bash
+docker compose exec api bash
 python -m pytest tests/
 ```
 
@@ -206,11 +206,11 @@ npm test
 
 ```bash
 # 所有服務
-docker-compose -p travelai logs -f
+docker compose -p travelai logs -f
 
 # 特定服務
-docker-compose -p travelai logs -f api
-docker-compose -p travelai logs -f postgres
+docker compose -p travelai logs -f api
+docker compose -p travelai logs -f postgres
 ```
 
 ### 健康檢查
@@ -220,7 +220,7 @@ docker-compose -p travelai logs -f postgres
 curl http://localhost:8000/health
 
 # 資料庫連接
-docker-compose exec postgres pg_isready -U postgres
+docker compose exec postgres pg_isready -U postgres
 ```
 
 ## 🛠️ 開發指南
@@ -305,7 +305,7 @@ python3 scripts/run_migration.py 007_new_feature.sql
 
 ```bash
 # 使用生產配置
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### 環境變數

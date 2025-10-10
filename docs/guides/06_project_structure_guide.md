@@ -20,7 +20,7 @@
 ├── tests/                # 測試代碼
 ├── .env                  # 環境變數
 ├── .gitignore
-├── docker-compose.yml    # Docker Compose 部署文件
+├── docker compose.yml    # Docker Compose 部署文件
 ├── Dockerfile            # API 服務的 Dockerfile
 └── README.md
 ```

@@ -280,7 +280,7 @@
 ### 1️⃣5️⃣ 部署準備
 
 - [ ] **任務 15.1: Docker 配置**
-  - [ ] 更新 `docker-compose.yml`（加入新服務）
+  - [ ] 更新 `docker compose.yml`（加入新服務）
   - [ ] 建立 `.env.example`
   - [ ] 編寫部署文件
 
