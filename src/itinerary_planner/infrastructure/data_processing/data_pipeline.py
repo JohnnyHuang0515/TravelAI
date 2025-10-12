@@ -491,10 +491,15 @@ class EmbeddingGenerator:
 class DataProcessingPipeline:
     """統一的資料處理管道"""
     
-    def __init__(self):
+    def __init__(self, enable_embeddings: bool = False):
         self.address_parser = AddressParser()
         self.context_enhancer = ContextEnhancer()
-        self.embedding_generator = EmbeddingGenerator()
+        # 暫時停用 embedding 功能
+        self.enable_embeddings = enable_embeddings
+        if enable_embeddings:
+            self.embedding_generator = EmbeddingGenerator()
+        else:
+            self.embedding_generator = None
     
     def process_raw_data(self, raw_data: Dict[str, Any], data_type: str = "place", source_type: str = "default") -> ProcessedData:
         """處理原始資料"""
@@ -607,13 +612,15 @@ class DataProcessingPipeline:
             
             processed.context_metadata = context
             
-            # 4. 生成 embedding
-            if data_type == "place":
-                embedding = self.embedding_generator.generate_place_embedding(processed)
-            else:  # accommodation
-                embedding = self.embedding_generator.generate_accommodation_embedding(processed)
-            
-            processed.embedding = embedding
+            # 4. 生成 embedding (暫時停用)
+            if self.enable_embeddings and self.embedding_generator:
+                if data_type == "place":
+                    embedding = self.embedding_generator.generate_place_embedding(processed)
+                else:  # accommodation
+                    embedding = self.embedding_generator.generate_accommodation_embedding(processed)
+                processed.embedding = embedding
+            else:
+                processed.embedding = None
             
             logger.info(f"成功處理 {data_type}: {processed.name}")
             return processed

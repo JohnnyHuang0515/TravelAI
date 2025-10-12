@@ -100,8 +100,8 @@ class UnifiedDataImporter:
             rating=processed.rating,
             price_range=processed.price_range,
             stay_minutes=processed.stay_minutes,
-            place_metadata=processed.context_metadata,
-            embedding=processed.embedding
+            place_metadata=processed.context_metadata
+            # embedding=processed.embedding  # 暫時移除
         )
         
         # 設定地理位置
@@ -118,8 +118,8 @@ class UnifiedDataImporter:
             type=processed.type,
             rating=processed.rating,
             price_range=processed.price_range,
-            amenities=processed.amenities,
-            embedding=processed.embedding
+            amenities=processed.amenities
+            # embedding=processed.embedding  # 暫時移除
         )
         
         # 設定地理位置
@@ -295,8 +295,9 @@ class UnifiedDataImporter:
             places_count = self.db.query(Place.id).count()
             accommodations_count = self.db.query(Accommodation.id).count()
             
-            places_with_embedding = self.db.query(Place.id).filter(Place.embedding.isnot(None)).count()
-            accommodations_with_embedding = self.db.query(Accommodation.id).filter(Accommodation.embedding.isnot(None)).count()
+            # 暫時移除 embedding 統計
+            places_with_embedding = 0  # self.db.query(Place.id).filter(Place.embedding.isnot(None)).count()
+            accommodations_with_embedding = 0  # self.db.query(Accommodation.id).filter(Accommodation.embedding.isnot(None)).count()
             
             places_with_metadata = self.db.query(Place.id).filter(Place.place_metadata.isnot(None)).count()
             

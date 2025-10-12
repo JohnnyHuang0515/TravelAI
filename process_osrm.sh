@@ -3,14 +3,17 @@
 
 set -e
 
-OSM_FILE="/home/johnny/專案/比賽資料/data/osrm/taiwan-250923.osm.pbf"
-OSRM_DIR="/home/johnny/專案/比賽資料/data/osrm"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$SCRIPT_DIR"
+OSRM_DIR="$PROJECT_ROOT/data/osrm"
+OSM_FILE="$OSRM_DIR/taiwan-250923.osm.pbf"
 
 echo "開始處理 OSM 資料為 OSRM 格式..."
 
 # 檢查 OSM 檔案是否存在
 if [ ! -f "$OSM_FILE" ]; then
     echo "❌ OSM 檔案不存在: $OSM_FILE"
+    echo "請先下載台灣 OSM 資料到 $OSRM_DIR 目錄"
     exit 1
 fi
 

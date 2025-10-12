@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import DateTime
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
-from pgvector.sqlalchemy import Vector
+# from pgvector.sqlalchemy import Vector  # 暫時移除向量支援
 from .database import Base
 
 
@@ -42,7 +42,7 @@ class Place(Base):
     source = Column(String(50))
     source_id = Column(String(255))
     place_metadata = Column(JSONB)
-    embedding = Column(Vector(384))  # 向量嵌入支援語義搜尋
+    # embedding = Column(Vector(384))  # 向量嵌入支援語義搜尋 (暫時移除)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -81,7 +81,7 @@ class Accommodation(Base):
     address = Column(Text)
     phone = Column(String)
     website = Column(String)
-    embedding = Column(Vector(384))  # 向量嵌入支援語義搜尋
+    # embedding = Column(Vector(384))  # 向量嵌入支援語義搜尋 (暫時移除)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

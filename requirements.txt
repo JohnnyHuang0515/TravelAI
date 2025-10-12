@@ -8,8 +8,9 @@ python-multipart==0.0.6
 sqlalchemy==2.0.23
 alembic==1.12.1
 psycopg2-binary==2.9.9
-geoalchemy2==0.14.2
+geoalchemy2[shapely]==0.14.2
 pgvector==0.2.3
+shapely==2.0.2
 
 # Redis
 redis==5.0.1

@@ -12,24 +12,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/migrations
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d itinerary_db"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # 資料庫初始化服務
-  db-init:
-    build: .
-    environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/itinerary_db
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: ["python3", "scripts/init_database.py"]
-    volumes:
-      - ./scripts:/app/scripts
-      - ./src:/app/src
 
   # API 服務 (我們的 FastAPI 應用)
   api:
@@ -43,9 +31,12 @@ services:
       - REDIS_URL=redis://redis:6379
       - OSRM_HOST=http://osrm-backend:5000
     depends_on:
-      - db-init
-      - redis
-      - osrm-backend
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      osrm-backend:
+        condition: service_started
     command: ["uvicorn", "src.itinerary_planner.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   # Redis 快取
@@ -58,7 +49,7 @@ services:
   osrm-backend:
     image: osrm/osrm-backend:v5.22.0
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - ./data/osrm:/data:ro
     command: osrm-routed --algorithm mld /data/taiwan-250923.osrm
