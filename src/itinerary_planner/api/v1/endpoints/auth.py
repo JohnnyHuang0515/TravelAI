@@ -24,7 +24,7 @@ from ..schemas.auth import (
 from ..dependencies.auth import get_auth_service, get_current_user
 
 
-router = APIRouter(prefix="/auth", tags=["認證"])
+router = APIRouter(tags=["認證"])
 
 
 # ============================================================================

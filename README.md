@@ -24,8 +24,14 @@ cd TravelAI
 # 賦予執行權限
 chmod +x quick-start.sh
 
-# 執行一鍵啟動腳本
+# 互動模式啟動（會提示選擇模式）
 bash quick-start.sh
+
+# 或使用非互動模式直接啟動
+bash quick-start.sh 1  # 完整 Docker 模式
+bash quick-start.sh 2  # 混合模式（推薦開發）
+bash quick-start.sh 3  # 僅後端服務
+bash quick-start.sh 4  # 僅前端服務
 ```
 
 **腳本自動完成**：
@@ -43,6 +49,12 @@ bash quick-start.sh
 3. **僅後端服務**：用於後端開發
 4. **僅前端服務**：用於前端開發
 
+**非互動模式特點：**
+- ✅ 支援自動化腳本和 CI/CD
+- ✅ 跳過所有使用者輸入提示
+- ✅ 自動啟動前端服務（模式 1, 2）
+- ✅ 快速啟動，無需等待輸入
+
 > 📖 **詳細文檔**：
 > - [一鍵啟動指南](docs/guides/quick_start_guide.md) - 完整功能說明和故障排除
 > - [使用範例](QUICKSTART_USAGE.md) - 6 種常見場景的操作示範
@@ -54,7 +66,7 @@ bash quick-start.sh
 bash scripts/stop.sh
 
 # 或使用 Docker Compose（僅 Docker 服務）
-docker-compose down
+docker compose down
 ```
 
 ### 啟動模式對照表
@@ -85,7 +97,7 @@ cp env.example .env
 uv sync
 
 # 啟動基礎服務（PostgreSQL, Redis, OSRM）
-docker-compose up -d postgres redis osrm-backend
+docker compose up -d postgres redis osrm-backend
 
 # 初始化資料庫（建立表格）
 uv run python scripts/init_database.py
@@ -114,19 +126,19 @@ npm run dev
 
 ```bash
 # 使用 Docker Compose 啟動所有服務
-docker-compose up -d
+docker compose up -d
 
 # 等待服務啟動後，初始化資料庫
-docker-compose exec api python3 scripts/init_database.py
+docker compose exec api python3 scripts/init_database.py
 
 # 匯入資料（首次使用）
-docker-compose exec api python3 scripts/unified_data_importer.py
+docker compose exec api python3 scripts/unified_data_importer.py
 
 # 查看服務狀態
-docker-compose ps
+docker compose ps
 
 # 查看日誌
-docker-compose logs -f api
+docker compose logs -f api
 ```
 
 ---
@@ -255,23 +267,37 @@ bash scripts/start_dev.sh
 
 ### 環境變數
 
-建立 `.env` 檔案：
+啟動腳本會自動從 `env.example` 建立 `.env` 檔案。手動建立：
+
+```bash
+cp env.example .env
+# 編輯 .env 設定必要的 API Key
+nano .env
+```
+
+`.env` 檔案內容：
 
 ```env
 # 資料庫
 DATABASE_URL=postgresql://postgres:password@localhost:5432/itinerary_db
 REDIS_URL=redis://localhost:6379
 
-# AI 服務
+# AI 服務（必填）
 GEMINI_API_KEY=your_google_gemini_api_key
 
-# OAuth
+# OAuth（可選）
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
 
 # 路由服務
 OSRM_HOST=http://localhost:5000
+
+# JWT 安全
+JWT_SECRET_KEY=your_jwt_secret_key_here
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
 ```
 
 ### 服務端口
@@ -303,7 +329,7 @@ python3 scripts/init_database.py
 uv run python scripts/init_database.py
 
 # 使用 Docker
-docker-compose exec api python3 scripts/init_database.py
+docker compose exec api python3 scripts/init_database.py
 ```
 
 **初始化腳本功能** (`scripts/init_database.py`)：
@@ -393,7 +419,7 @@ db.close()
 bash scripts/start_real_osrm.sh
 
 # 或使用 Docker Compose（會自動處理）
-docker-compose up -d osrm-backend
+docker compose up -d osrm-backend
 ```
 
 ### 準備台灣地圖資料
@@ -462,7 +488,7 @@ npm run dev
 uv run pytest tests/
 
 # 或進入 API 容器執行測試
-docker-compose exec api bash
+docker compose exec api bash
 python -m pytest tests/
 ```
 
@@ -479,11 +505,11 @@ npm run lint  # 執行 ESLint 檢查
 
 ```bash
 # 所有服務
-docker-compose logs -f
+docker compose logs -f
 
 # 特定服務
-docker-compose logs -f api
-docker-compose logs -f postgres
+docker compose logs -f api
+docker compose logs -f postgres
 ```
 
 ### 健康檢查
@@ -493,7 +519,7 @@ docker-compose logs -f postgres
 curl http://localhost:8000/health
 
 # 資料庫連接
-docker-compose exec postgres pg_isready -U postgres
+docker compose exec postgres pg_isready -U postgres
 ```
 
 ## 🛠️ 開發指南
@@ -593,10 +619,10 @@ touch migrations/008_new_feature.sql
 psql -h localhost -U postgres -d itinerary_db -f migrations/008_new_feature.sql
 
 # 或使用 Docker Compose 執行
-docker-compose exec postgres psql -U postgres -d itinerary_db -f /migrations/008_new_feature.sql
+docker compose exec postgres psql -U postgres -d itinerary_db -f /migrations/008_new_feature.sql
 
 # 或進入容器內執行
-docker-compose exec postgres bash
+docker compose exec postgres bash
 psql -U postgres -d itinerary_db < /migrations/008_new_feature.sql
 ```
 
@@ -606,7 +632,7 @@ psql -U postgres -d itinerary_db < /migrations/008_new_feature.sql
 
 ```bash
 # 使用生產配置
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### 環境變數
@@ -652,16 +678,16 @@ MIT License
 **解決方案**：
 ```bash
 # 1. 檢查 PostgreSQL 是否運行
-docker-compose ps postgres
+docker compose ps postgres
 
 # 2. 重啟資料庫
-docker-compose restart postgres
+docker compose restart postgres
 
 # 3. 檢查連接
-docker-compose exec postgres pg_isready -U postgres
+docker compose exec postgres pg_isready -U postgres
 
 # 4. 查看日誌
-docker-compose logs postgres
+docker compose logs postgres
 ```
 
 ### Q2: 一鍵啟動腳本權限錯誤
@@ -672,6 +698,9 @@ docker-compose logs postgres
 ```bash
 chmod +x quick-start.sh
 bash quick-start.sh
+
+# 或使用非互動模式
+bash quick-start.sh 2  # 直接啟動混合模式
 ```
 
 ### Q3: OSRM 服務無法啟動
@@ -715,20 +744,27 @@ python3 scripts/unified_data_importer.py 2>&1 | tee import.log
 
 ### Q5: 前端無法連接後端
 
-**症狀**：前端顯示 API 連接錯誤
+**症狀**：前端顯示 `ERR_CONNECTION_REFUSED` 或 `Network Error`
 
 **解決方案**：
 ```bash
 # 1. 確認後端正在運行
 curl http://localhost:8000/health
+ps aux | grep uvicorn
 
-# 2. 檢查 CORS 設定（main.py）
+# 2. 啟動後端服務
+bash quick-start.sh 3  # 僅後端模式
+
+# 3. 檢查 API 路徑配置
+# 前端應使用: /v1/auth/register （非 /v1/auth/auth/register）
+
+# 4. 檢查 CORS 設定（main.py）
 # 應包含: allow_origins=["http://localhost:3000"]
 
-# 3. 重啟後端服務
-docker-compose restart api
+# 5. 重啟後端服務
+docker compose restart api
 # 或
-pkill -f uvicorn && uv run uvicorn src.itinerary_planner.main:app --reload
+pkill -f uvicorn && bash quick-start.sh 3
 ```
 
 ### Q6: API Key 未設定警告
@@ -798,6 +834,21 @@ bash scripts/stop.sh
 ---
 
 ## 📝 更新日誌
+
+### v1.0.1 (2025-10-13)
+
+**新增功能**：
+- ✨ 一鍵啟動腳本支援非互動模式（命令行參數）
+- ✨ 支援自動化部署和 CI/CD 整合
+
+**修正問題**：
+- 🐛 修正後端 API 路徑重複 `/auth/auth` 問題
+- 🐛 修正啟動腳本在後台模式無法執行的問題
+
+**改進**：
+- ⚡ 優化啟動腳本，支援參數化啟動
+- 📝 更新所有 Docker 指令為新版格式 (`docker compose`)
+- 📝 更新 README 文檔說明和環境變數配置範例
 
 ### v1.0.0 (2025-10-12)
 

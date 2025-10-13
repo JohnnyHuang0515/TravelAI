@@ -1,5 +1,5 @@
 import axios from "axios";
-import { LoginRequest, RegisterRequest, RegisterAPIRequest, AuthResponse } from "@/lib/types/auth";
+import { LoginRequest, RegisterAPIRequest, AuthResponse, User } from "@/lib/types/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -40,30 +40,30 @@ api.interceptors.response.use(
 export const authAPI = {
   // 登入
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post("/v1/auth/auth/login", data);
+    const response = await api.post("/v1/auth/login", data);
     return response.data;
   },
 
   // 註冊
   register: async (data: RegisterAPIRequest): Promise<AuthResponse> => {
-    const response = await api.post("/v1/auth/auth/register", data);
+    const response = await api.post("/v1/auth/register", data);
     return response.data;
   },
 
   // 登出
   logout: async (): Promise<void> => {
-    await api.post("/v1/auth/auth/logout");
+    await api.post("/v1/auth/logout");
   },
 
   // 獲取當前用戶
   getCurrentUser: async (): Promise<User> => {
-    const response = await api.get("/v1/auth/auth/me");
+    const response = await api.get("/v1/auth/me");
     return response.data;
   },
 
   // 刷新 token
   refreshToken: async (): Promise<AuthResponse> => {
-    const response = await api.post("/v1/auth/auth/refresh");
+    const response = await api.post("/v1/auth/refresh");
     return response.data;
   },
 };

@@ -3,6 +3,15 @@
 # ============================================
 # TravelAI 智慧旅遊系統 - 一鍵啟動腳本
 # ============================================
+#
+# 使用方式:
+#   ./quick-start.sh         # 互動模式
+#   ./quick-start.sh 1       # 完整 Docker 模式（非互動）
+#   ./quick-start.sh 2       # 混合模式（非互動）
+#   ./quick-start.sh 3       # 僅後端服務（非互動）
+#   ./quick-start.sh 4       # 僅前端服務（非互動）
+#
+# ============================================
 
 set -e
 
@@ -62,14 +71,19 @@ print_header "🚀 TravelAI 智慧旅遊系統 - 一鍵啟動"
 # 步驟 1: 選擇啟動模式
 # ============================================
 
-echo "請選擇啟動模式："
-echo "  1) 完整 Docker 模式（推薦，包含所有服務）"
-echo "  2) 混合模式（Docker 基礎服務 + 本地開發）"
-echo "  3) 僅後端服務"
-echo "  4) 僅前端服務"
-echo ""
-read -p "請輸入選項 [1-4] (預設: 1): " MODE
-MODE=${MODE:-1}
+# 支援命令行參數: ./quick-start.sh [1-4]
+if [ -n "$1" ]; then
+    MODE=$1
+else
+    echo "請選擇啟動模式："
+    echo "  1) 完整 Docker 模式（推薦，包含所有服務）"
+    echo "  2) 混合模式（Docker 基礎服務 + 本地開發）"
+    echo "  3) 僅後端服務"
+    echo "  4) 僅前端服務"
+    echo ""
+    read -p "請輸入選項 [1-4] (預設: 1): " MODE
+    MODE=${MODE:-1}
+fi
 
 # ============================================
 # 步驟 2: 環境檢查
@@ -86,11 +100,16 @@ fi
 print_success "Docker 已安裝 ($(docker --version | cut -d' ' -f3 | tr -d ','))"
 
 # 檢查 Docker Compose
-if ! check_command docker-compose && ! docker compose version &> /dev/null; then
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+    print_success "Docker Compose 已安裝 (V2)"
+elif check_command docker-compose; then
+    DOCKER_COMPOSE="docker-compose"
+    print_success "Docker Compose 已安裝 (V1)"
+else
     print_error "Docker Compose 未安裝"
     exit 1
 fi
-print_success "Docker Compose 已安裝"
 
 # 根據模式檢查其他依賴
 if [ "$MODE" = "2" ] || [ "$MODE" = "3" ]; then
@@ -130,11 +149,11 @@ fi
 
 print_header "🔧 檢查環境變數"
 
-if [ ! -f "$PROJECT_ROOT/.env" ]; then
+if [ ! -f ".env" ]; then
     print_warning ".env 檔案不存在"
     
-    if [ -f "$PROJECT_ROOT/env.example" ]; then
-        cp "$PROJECT_ROOT/env.example" "$PROJECT_ROOT/.env"
+    if [ -f "env.example" ]; then
+        cp "env.example" ".env"
         print_success ".env 檔案已建立（從 env.example 複製）"
         print_warning "請編輯 .env 檔案並設定以下必要變數："
         echo "  - GEMINI_API_KEY (Google Gemini API 金鑰)"
@@ -170,33 +189,39 @@ case $MODE in
         print_header "🐳 啟動完整 Docker 服務"
         
         print_info "停止現有容器..."
-        docker-compose down 2>/dev/null || true
+        $DOCKER_COMPOSE down 2>/dev/null || true
         
         print_info "啟動所有服務（PostgreSQL, Redis, OSRM, API）..."
-        docker-compose up -d
+        $DOCKER_COMPOSE up -d
         
         print_info "等待服務啟動..."
         sleep 15
         
         # 初始化資料庫（建表）
         print_header "🗄️  初始化資料庫"
-        docker-compose exec -T api python3 scripts/init_database.py || {
+        $DOCKER_COMPOSE exec -T api python3 scripts/init_database.py || {
             print_warning "資料庫初始化失敗，可能表已存在"
         }
         
         # 檢查資料是否已匯入
         print_header "📊 檢查資料庫"
         
-        PLACE_COUNT=$(docker-compose exec -T postgres psql -U postgres -d itinerary_db -t -c "SELECT COUNT(*) FROM places;" 2>/dev/null | tr -d ' ' || echo "0")
+        PLACE_COUNT=$($DOCKER_COMPOSE exec -T postgres psql -U postgres -d itinerary_db -t -c "SELECT COUNT(*) FROM places;" 2>/dev/null | tr -d ' ' || echo "0")
         
         if [ "$PLACE_COUNT" = "0" ] || [ -z "$PLACE_COUNT" ]; then
             print_warning "資料庫為空，建議執行資料匯入"
-            read -p "是否現在匯入資料？ (y/N): " IMPORT_DATA
             
-            if [ "$IMPORT_DATA" = "y" ] || [ "$IMPORT_DATA" = "Y" ]; then
-                print_info "執行資料匯入（這可能需要幾分鐘）..."
-                docker-compose exec api python3 scripts/unified_data_importer.py
-                print_success "資料匯入完成"
+            # 非互動模式下跳過資料匯入
+            if [ -n "$1" ]; then
+                print_info "非互動模式，跳過資料匯入"
+            else
+                read -p "是否現在匯入資料？ (y/N): " IMPORT_DATA
+                
+                if [ "$IMPORT_DATA" = "y" ] || [ "$IMPORT_DATA" = "Y" ]; then
+                    print_info "執行資料匯入（這可能需要幾分鐘）..."
+                    $DOCKER_COMPOSE exec api python3 scripts/unified_data_importer.py
+                    print_success "資料匯入完成"
+                fi
             fi
         else
             print_success "資料庫已有 $PLACE_COUNT 筆地點資料"
@@ -204,26 +229,33 @@ case $MODE in
         
         # 前端提示
         print_header "💻 啟動前端（可選）"
-        read -p "是否啟動前端開發服務器？ (Y/n): " START_FRONTEND
-        START_FRONTEND=${START_FRONTEND:-Y}
+        
+        # 非互動模式下自動啟動前端
+        if [ -n "$1" ]; then
+            START_FRONTEND="Y"
+        else
+            read -p "是否啟動前端開發服務器？ (Y/n): " START_FRONTEND
+            START_FRONTEND=${START_FRONTEND:-Y}
+        fi
         
         if [ "$START_FRONTEND" = "y" ] || [ "$START_FRONTEND" = "Y" ]; then
-            cd "$PROJECT_ROOT/frontend"
+            cd frontend
             
             if [ ! -d "node_modules" ]; then
                 print_info "安裝前端依賴..."
                 npm install
             fi
             
+            mkdir -p ../logs
             print_info "啟動前端服務（後台運行）..."
-            nohup npm run dev > "$PROJECT_ROOT/logs/frontend.log" 2>&1 &
+            nohup npm run dev > ../logs/frontend.log 2>&1 &
             FRONTEND_PID=$!
-            echo $FRONTEND_PID > "$PROJECT_ROOT/logs/frontend.pid"
+            echo $FRONTEND_PID > ../logs/frontend.pid
             
             print_success "前端服務已啟動 (PID: $FRONTEND_PID)"
-            print_info "前端日誌: $PROJECT_ROOT/logs/frontend.log"
+            print_info "前端日誌: logs/frontend.log"
             
-            cd "$PROJECT_ROOT"
+            cd ..
         fi
         ;;
         
@@ -233,7 +265,7 @@ case $MODE in
         
         # 啟動基礎服務
         print_info "啟動 PostgreSQL, Redis, OSRM..."
-        docker-compose up -d postgres redis osrm-backend
+        $DOCKER_COMPOSE up -d postgres redis osrm-backend
         
         print_info "等待服務啟動..."
         sleep 10
@@ -288,21 +320,22 @@ case $MODE in
         # 啟動前端
         print_header "💻 啟動前端服務"
         
-        cd "$PROJECT_ROOT/frontend"
+        cd frontend
         
         if [ ! -d "node_modules" ]; then
             print_info "安裝前端依賴..."
             npm install
         fi
         
+        mkdir -p ../logs
         print_info "啟動前端服務（後台運行）..."
-        nohup npm run dev > "$PROJECT_ROOT/logs/frontend.log" 2>&1 &
+        nohup npm run dev > ../logs/frontend.log 2>&1 &
         FRONTEND_PID=$!
-        echo $FRONTEND_PID > "$PROJECT_ROOT/logs/frontend.pid"
+        echo $FRONTEND_PID > ../logs/frontend.pid
         
         print_success "前端服務已啟動 (PID: $FRONTEND_PID)"
         
-        cd "$PROJECT_ROOT"
+        cd ..
         ;;
         
     3)
@@ -311,7 +344,7 @@ case $MODE in
         
         # 啟動基礎服務
         print_info "啟動 PostgreSQL, Redis, OSRM..."
-        docker-compose up -d postgres redis osrm-backend
+        $DOCKER_COMPOSE up -d postgres redis osrm-backend
         
         print_info "等待服務啟動..."
         sleep 10
@@ -356,7 +389,7 @@ case $MODE in
         # 僅前端服務
         print_header "💻 啟動僅前端服務"
         
-        cd "$PROJECT_ROOT/frontend"
+        cd frontend
         
         if [ ! -d "node_modules" ]; then
             print_info "安裝前端依賴..."
@@ -424,17 +457,17 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 if [ "$MODE" = "1" ]; then
     echo "查看所有服務日誌:"
-    echo "  docker-compose logs -f"
+    echo "  $DOCKER_COMPOSE logs -f"
     echo ""
     echo "查看特定服務日誌:"
-    echo "  docker-compose logs -f api"
-    echo "  docker-compose logs -f postgres"
+    echo "  $DOCKER_COMPOSE logs -f api"
+    echo "  $DOCKER_COMPOSE logs -f postgres"
     echo ""
     echo "停止所有服務:"
-    echo "  docker-compose down"
+    echo "  $DOCKER_COMPOSE down"
     echo ""
     echo "重啟服務:"
-    echo "  docker-compose restart"
+    echo "  $DOCKER_COMPOSE restart"
 fi
 
 if [ "$MODE" = "2" ]; then
