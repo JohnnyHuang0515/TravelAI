@@ -108,9 +108,9 @@ def create_tables(engine):
         from itinerary_planner.infrastructure.persistence.orm_models import (
             Place, Accommodation, Hour, 
             User, UserPreference,
-            UserTrip, TripDay, TripDayItem,
-            PlaceFavorite, PlaceVisit,
-            ConversationSession, Message, FeedbackEvent
+            UserTrip, TripDay, TripVisit,
+            PlaceFavorite,
+            ConversationSession, FeedbackEvent
         )
         
         # 建立所有表
