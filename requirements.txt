@@ -34,3 +34,9 @@ python-jose[cryptography]==3.3.0
 # 工具
 python-dotenv==1.0.0
 pydantic-settings==2.1.0
+
+# 公車資料處理
+pandas==2.1.4
+
+# OSRM 路由引擎支援
+requests==2.31.0

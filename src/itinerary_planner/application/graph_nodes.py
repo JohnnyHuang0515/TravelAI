@@ -33,7 +33,8 @@ class GraphNodes:
             "interests": "興趣類型",
             "budget": "預算範圍",
             "travel_style": "旅遊風格",
-            "group_size": "人數"
+            "group_size": "人數",
+            "transport_mode": "交通工具偏好"
         }
 
     def conversation_memory_manager(self, state: AppState) -> AppState:
@@ -258,56 +259,64 @@ class GraphNodes:
         return {**state, "accommodation_candidates": accommodations}
 
     def plan_itinerary(self, state: AppState) -> AppState:
-        """節點：規劃行程"""
-        print("--- Node: plan_itinerary ---")
+        """節點：規劃行程（整合交通工具偏好）"""
+        print("--- Node: plan_itinerary (Enhanced with Transport) ---")
         story = state.get("story")
         candidates = state.get("candidates")
         accommodation_candidates = state.get("accommodation_candidates", [])
+        conversation_state = state.get("conversation_state")
 
         if not story or not candidates:
             return {**state, "error": "Story or candidates not found."}
 
-        # 提取所有地點的座標
-        from sqlalchemy import func
-        db = SessionLocal()
+        # 取得交通工具偏好
+        transport_mode = "mixed"  # 預設值
+        if conversation_state and conversation_state.collected_info:
+            transport_mode = conversation_state.collected_info.get("transport_mode", "mixed")
+        
+        print(f"🚗 交通工具偏好: {transport_mode}")
+
+        # 使用增強版規劃服務
         try:
-            # 獲取所有候選地點的座標，確保順序與 candidates 一致
-            place_ids = [str(p.id) for p in candidates]
+            from .services.enhanced_planning_service import EnhancedPlanningService
+            from .services.bus_routing_service import BusRoutingService
             
-            # 建立 ID 到座標的映射
-            results = db.query(
-                Place.id,
-                func.ST_Y(Place.geom).label('lat'),
-                func.ST_X(Place.geom).label('lon')
-            ).filter(Place.id.in_(place_ids)).all()
+            # 建立增強版規劃服務
+            enhanced_planner = EnhancedPlanningService()
             
-            # 建立 ID 到座標的映射
-            coord_map = {str(r.id): (r.lon, r.lat) for r in results}
+            # 規劃行程（包含交通）
+            itinerary = enhanced_planner.plan_itinerary_with_transport(
+                story, candidates, user_transport_choice=transport_mode
+            )
             
-            # 按照 candidates 的順序建立 locations
-            locations = [coord_map[str(p.id)] for p in candidates if str(p.id) in coord_map]
+            print(f"✅ 增強版行程規劃完成，包含 {len(itinerary.days)} 天行程")
             
-            # 調試：打印候選景點順序
-            print(f"🔍 **調試候選景點順序**")
-            for i, p in enumerate(candidates):
-                print(f"  {i}: {p.name} (ID: {p.id})")
-            print()
+        except Exception as e:
+            print(f"⚠️ 增強版規劃失敗，回退到基礎規劃: {e}")
             
-            # 調試：打印座標順序
-            print(f"🔍 **調試座標順序**")
-            for i, (lon, lat) in enumerate(locations):
-                place_name = candidates[i].name if i < len(candidates) else 'Unknown'
-                print(f"  {i}: {place_name} ({lon}, {lat})")
-            print()
-        finally:
-            db.close()
-        import asyncio
-        travel_matrix = asyncio.run(osrm_client.get_travel_time_matrix(locations))
-
-        if not travel_matrix:
-            return {**state, "error": "Failed to get travel time matrix."}
-
-        itinerary = greedy_planner.plan(story, candidates, travel_matrix)
+            # 回退到原始規劃方法
+            from sqlalchemy import func
+            db = SessionLocal()
+            try:
+                place_ids = [str(p.id) for p in candidates]
+                results = db.query(
+                    Place.id,
+                    func.ST_Y(Place.geom).label('lat'),
+                    func.ST_X(Place.geom).label('lon')
+                ).filter(Place.id.in_(place_ids)).all()
+                
+                coord_map = {str(r.id): (r.lon, r.lat) for r in results}
+                locations = [coord_map[str(p.id)] for p in candidates if str(p.id) in coord_map]
+            finally:
+                db.close()
+            
+            import asyncio
+            travel_matrix = asyncio.run(osrm_client.get_travel_time_matrix(locations))
+            
+            if not travel_matrix:
+                return {**state, "error": "Failed to get travel time matrix."}
+            
+            itinerary = greedy_planner.plan(story, candidates, travel_matrix)
         
         # 添加住宿推薦
         if accommodation_candidates:
@@ -315,9 +324,70 @@ class GraphNodes:
                 itinerary.days, accommodation_candidates, story
             )
         
-        print("Planning complete.")
+        # 添加交通摘要到行程
+        self._add_transport_summary_to_itinerary(itinerary, transport_mode)
         
-        return {**state, "itinerary": itinerary}
+        print("Planning complete with transport integration.")
+        
+        return {**state, "itinerary": itinerary, "transport_mode": transport_mode}
+
+    def _add_transport_summary_to_itinerary(self, itinerary, transport_mode):
+        """為行程添加交通摘要"""
+        try:
+            transport_mode_names = {
+                "driving": "開車",
+                "public_transport": "大眾運輸",
+                "mixed": "混合交通",
+                "eco_friendly": "環保出行"
+            }
+            
+            mode_name = transport_mode_names.get(transport_mode, "混合交通")
+            
+            # 計算總交通統計
+            total_cost = 0.0
+            total_duration = 0
+            transport_segments = 0
+            
+            for day in itinerary.days:
+                for visit in day.visits:
+                    if hasattr(visit.place, 'description') and visit.place.description:
+                        # 檢查是否包含交通資訊
+                        if "交通資訊:" in visit.place.description:
+                            transport_segments += 1
+                            # 簡單解析費用（實際應用中需要更複雜的解析）
+                            if "費用:" in visit.place.description:
+                                try:
+                                    cost_part = visit.place.description.split("費用: $")[1].split(")")[0]
+                                    total_cost += float(cost_part)
+                                except:
+                                    pass
+            
+            # 添加行程摘要
+            summary = f"\n\n📊 交通規劃摘要:\n"
+            summary += f"主要交通方式: {mode_name}\n"
+            if transport_segments > 0:
+                summary += f"交通路段數: {transport_segments}\n"
+                if total_cost > 0:
+                    summary += f"預估交通費用: ${total_cost:.0f}\n"
+            
+            # 添加交通建議
+            if transport_mode == "driving":
+                summary += "💡 建議: 提前確認停車資訊，注意路況\n"
+            elif transport_mode == "public_transport":
+                summary += "💡 建議: 準備零錢或悠遊卡，注意班次時間\n"
+            elif transport_mode == "mixed":
+                summary += "💡 建議: 智能選擇最佳交通方式，彈性調整\n"
+            elif transport_mode == "eco_friendly":
+                summary += "💡 建議: 環保出行，建議攜帶環保用品\n"
+            
+            # 添加到行程描述
+            if hasattr(itinerary, 'description'):
+                itinerary.description = (itinerary.description or "") + summary
+            else:
+                itinerary.description = summary
+                
+        except Exception as e:
+            print(f"添加交通摘要時發生錯誤: {e}")
 
     # 對話相關的輔助方法
     def _get_conversation_state(self, session_id: str) -> Optional[ConversationState]:
@@ -432,6 +502,16 @@ class GraphNodes:
                 state.collected_info["interests"] = []
             if "自然風景" not in state.collected_info["interests"]:
                 state.collected_info["interests"].append("自然風景")
+        
+        # 交通工具偏好關鍵字
+        if "開車" in message or "自駕" in message or "汽車" in message:
+            state.add_info("transport_mode", "driving")
+        elif "大眾運輸" in message or "公車" in message or "火車" in message or "捷運" in message:
+            state.add_info("transport_mode", "public_transport")
+        elif "環保" in message or "綠色" in message or "低碳" in message:
+            state.add_info("transport_mode", "eco_friendly")
+        elif "混合" in message or "彈性" in message or "智能" in message:
+            state.add_info("transport_mode", "mixed")
     
     def _is_info_complete(self, state: ConversationState) -> bool:
         """檢查是否收集足夠的資訊"""
@@ -465,6 +545,11 @@ class GraphNodes:
         已收集的資訊: {json.dumps(state.collected_info, ensure_ascii=False)}
         還需要收集: {', '.join(missing_info)}
         對話歷史: {json.dumps(state.conversation_history[-3:], ensure_ascii=False)}
+        
+        特別注意：
+        - 如果需要收集交通工具偏好，請提供選項：開車、大眾運輸、混合模式、環保出行
+        - 如果是交通工具偏好問題，請說明各選項的特點
+        - 根據目的地和興趣類型推薦合適的交通方式
         
         請生成一個友善、自然的問題，幫助收集旅遊規劃資訊。
         回應格式: 直接返回問題文字，不要其他內容。

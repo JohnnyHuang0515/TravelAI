@@ -301,3 +301,128 @@ class FeedbackEvent(Base):
     __table_args__ = (
         CheckConstraint("op IN ('DROP', 'REPLACE', 'MOVE', 'ADD')", name="check_op"),
     )
+
+
+# ============================================================================
+# 公車運輸相關模型（新增）
+# ============================================================================
+
+class BusRoute(Base):
+    """公車路線 (BusRoute) 的 ORM 模型"""
+    __tablename__ = "bus_routes"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    route_id = Column(String(50), unique=True, nullable=False, index=True)  # 路線ID (如: 11, 12)
+    route_name = Column(String(50), nullable=False, index=True)  # 路線編號 (如: 紅1, 綠12)
+    departure_stop = Column(String(255), nullable=False)  # 起站
+    destination_stop = Column(String(255), nullable=False)  # 迄站
+    route_type = Column(String(50))  # 路線類型
+    status = Column(String(50))  # 營運狀態
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 關聯
+    stations = relationship("BusStation", back_populates="route", cascade="all, delete-orphan")
+    trips = relationship("BusTrip", back_populates="route", cascade="all, delete-orphan")
+    
+    # 約束
+    __table_args__ = (
+        UniqueConstraint("route_id", name="uq_bus_route_id"),
+        UniqueConstraint("route_name", name="uq_bus_route_name"),
+    )
+
+
+class BusStation(Base):
+    """公車站點 (BusStation) 的 ORM 模型"""
+    __tablename__ = "bus_stations"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    route_id = Column(PG_UUID(as_uuid=True), ForeignKey("bus_routes.id", ondelete="CASCADE"), nullable=False, index=True)
+    station_id = Column(String(50), nullable=False, index=True)  # 站牌ID
+    station_name = Column(String(255), nullable=False)  # 站名
+    sequence = Column(Integer, nullable=False)  # 站序
+    direction = Column(Integer, nullable=False)  # 方向 (0: 去程, 1: 回程)
+    geom = Column(Geometry('POINT', srid=4326), index=True)  # 站點座標
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # 關聯
+    route = relationship("BusRoute", back_populates="stations")
+    stop_times = relationship("BusStopTime", back_populates="station", cascade="all, delete-orphan")
+    
+    # 約束
+    __table_args__ = (
+        UniqueConstraint("route_id", "station_id", "direction", "sequence", name="uq_bus_station_sequence"),
+    )
+
+
+class BusTrip(Base):
+    """公車班次 (BusTrip) 的 ORM 模型"""
+    __tablename__ = "bus_trips"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    route_id = Column(PG_UUID(as_uuid=True), ForeignKey("bus_routes.id", ondelete="CASCADE"), nullable=False, index=True)
+    trip_id = Column(String(50), nullable=False, index=True)  # 班次ID
+    direction = Column(Integer, nullable=False)  # 方向 (0: 去程, 1: 回程)
+    departure_time = Column(Time, nullable=False)  # 發車時間
+    departure_station = Column(String(255), nullable=False)  # 發車站名
+    operating_days = Column(ARRAY(String))  # 營運日 ["Monday", "Tuesday", ...]
+    is_low_floor = Column(Boolean, default=False)  # 是否為低地板公車
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # 關聯
+    route = relationship("BusRoute", back_populates="trips")
+    stop_times = relationship("BusStopTime", back_populates="trip", cascade="all, delete-orphan")
+    
+    # 約束
+    __table_args__ = (
+        UniqueConstraint("route_id", "trip_id", "direction", name="uq_bus_trip"),
+    )
+
+
+class BusStopTime(Base):
+    """公車時刻表 (BusStopTime) 的 ORM 模型"""
+    __tablename__ = "bus_stop_times"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    trip_id = Column(PG_UUID(as_uuid=True), ForeignKey("bus_trips.id", ondelete="CASCADE"), nullable=False, index=True)
+    station_id = Column(PG_UUID(as_uuid=True), ForeignKey("bus_stations.id", ondelete="CASCADE"), nullable=False, index=True)
+    sequence = Column(Integer, nullable=False)  # 站序
+    arrival_time = Column(Time, nullable=False)  # 抵達時間
+    departure_time = Column(Time, nullable=False)  # 離站時間
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # 關聯
+    trip = relationship("BusTrip", back_populates="stop_times")
+    station = relationship("BusStation", back_populates="stop_times")
+    
+    # 約束
+    __table_args__ = (
+        UniqueConstraint("trip_id", "sequence", name="uq_bus_stop_time_sequence"),
+    )
+
+
+# ============================================================================
+# 運輸整合相關模型（新增）
+# ============================================================================
+
+class TransportConnection(Base):
+    """運輸連接點 (TransportConnection) 的 ORM 模型"""
+    __tablename__ = "transport_connections"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    place_id = Column(PG_UUID(as_uuid=True), ForeignKey("places.id", ondelete="CASCADE"), nullable=True, index=True)
+    station_id = Column(PG_UUID(as_uuid=True), ForeignKey("bus_stations.id", ondelete="CASCADE"), nullable=True, index=True)
+    connection_type = Column(String(50), nullable=False)  # 'bus_station', 'transfer_point'
+    distance_meters = Column(Integer)  # 距離 (公尺)
+    walking_time_minutes = Column(Integer)  # 步行時間 (分鐘)
+    is_accessible = Column(Boolean, default=True)  # 是否無障礙
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # 約束
+    __table_args__ = (
+        CheckConstraint(
+            "(place_id IS NOT NULL AND station_id IS NULL) OR "
+            "(place_id IS NULL AND station_id IS NOT NULL)",
+            name="check_connection_reference"
+        ),
+    )
