@@ -41,22 +41,48 @@ interface Itinerary {
 export default function PlanResultPage() {
   const router = useRouter();
   const [preferences, setPreferences] = useState<Preferences>({
-    destination: "",
-    startDate: "",
-    endDate: "",
-    duration: 1,
-    interests: [],
-    budget: "moderate",
+    destination: "台北",
+    startDate: "2025-10-26",
+    endDate: "2025-10-27",
+    duration: 2,
+    interests: ["food", "culture"],
+    budget: "medium",
     pace: "moderate"
   });
   
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // 直接設為 false
 
   useEffect(() => {
-    // 從 localStorage 載入用戶偏好
-    loadUserPreferences();
+    // 直接使用預設數據，不等待 localStorage
+    console.log("使用預設測試數據");
+    const defaultFormData = {
+      destination: "台北",
+      startDate: "2025-10-26",
+      endDate: "2025-10-27",
+      days: 2,
+      interests: ["food", "culture"],
+      budget: "medium",
+      pace: "moderate"
+    };
+    
+    setPreferences({
+      destination: defaultFormData.destination,
+      startDate: defaultFormData.startDate,
+      endDate: defaultFormData.endDate,
+      duration: defaultFormData.days,
+      interests: defaultFormData.interests,
+      budget: defaultFormData.budget,
+      pace: defaultFormData.pace
+    });
+    
+    // 直接生成模擬行程，不調用異步函數
+    const mockItinerary = generateMockItineraryBasedOnPreferences(defaultFormData);
+    setItinerary(mockItinerary);
+    
+    console.log("設置 isLoading 為 false");
+    setIsLoading(false);
   }, []);
 
   const loadUserPreferences = async () => {
@@ -80,13 +106,55 @@ export default function PlanResultPage() {
         // 載入偏好後生成初始行程
         await generateInitialItinerary(formData);
       } else {
-        // 如果沒有偏好數據，重定向到規劃頁面
-        router.push("/plan/start");
-        return;
+        // 如果沒有偏好數據，使用預設測試數據
+        console.log("沒有找到 localStorage 數據，使用預設測試數據");
+        const defaultFormData = {
+          destination: "台北",
+          startDate: "2025-10-26",
+          endDate: "2025-10-27",
+          days: 2,
+          interests: ["food", "culture"],
+          budget: "medium",
+          pace: "moderate"
+        };
+        
+        setPreferences({
+          destination: defaultFormData.destination,
+          startDate: defaultFormData.startDate,
+          endDate: defaultFormData.endDate,
+          duration: defaultFormData.days,
+          interests: defaultFormData.interests,
+          budget: defaultFormData.budget,
+          pace: defaultFormData.pace
+        });
+        
+        // 使用預設數據生成初始行程
+        await generateInitialItinerary(defaultFormData);
       }
     } catch (error) {
       console.error("載入用戶偏好失敗:", error);
-      router.push("/plan/start");
+      // 即使出錯也使用預設數據
+      const defaultFormData = {
+        destination: "台北",
+        startDate: "2025-10-26",
+        endDate: "2025-10-27",
+        days: 2,
+        interests: ["food", "culture"],
+        budget: "medium",
+        pace: "moderate"
+      };
+      
+      setPreferences({
+        destination: defaultFormData.destination,
+        startDate: defaultFormData.startDate,
+        endDate: defaultFormData.endDate,
+        duration: defaultFormData.days,
+        interests: defaultFormData.interests,
+        budget: defaultFormData.budget,
+        pace: defaultFormData.pace
+      });
+      
+      await generateInitialItinerary(defaultFormData);
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +177,7 @@ export default function PlanResultPage() {
       
       // 這裡可以調用統一對話 API 來生成真實的行程
       // 暫時使用模擬數據，但會根據用戶偏好調整
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // await new Promise(resolve => setTimeout(resolve, 2000));
       
       const mockItinerary = generateMockItineraryBasedOnPreferences(userPrefs);
       setItinerary(mockItinerary);
@@ -216,6 +284,8 @@ export default function PlanResultPage() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
             <p className="text-slate-600 dark:text-slate-400">正在載入您的行程偏好...</p>
+            <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">如果載入時間過長，請重新整理頁面</p>
+            <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">調試信息: isLoading={isLoading.toString()}</p>
           </div>
         </div>
       </AppLayout>

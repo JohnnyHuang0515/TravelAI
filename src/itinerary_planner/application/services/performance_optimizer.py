@@ -4,6 +4,7 @@ import json
 import asyncio
 import time
 import hashlib
+import os
 from datetime import datetime, timedelta
 from functools import wraps
 from dataclasses import dataclass, field
@@ -40,7 +41,9 @@ class PerformanceOptimizer:
     
     def __init__(self, db_session: Session, redis_client: Optional[redis.Redis] = None):
         self.db = db_session
-        self.redis_client = redis_client or redis.Redis(host='localhost', port=6379, db=1)
+        # 從環境變數讀取 Redis 連線設定
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        self.redis_client = redis_client or redis.from_url(redis_url, decode_responses=True)
         
         # 內存快取（LRU策略）
         self.memory_cache: Dict[str, CacheEntry] = {}

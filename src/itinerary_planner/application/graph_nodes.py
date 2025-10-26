@@ -17,6 +17,7 @@ from ..infrastructure.clients.gemini_llm_client import GeminiLLMClient
 from typing import Optional
 import redis
 import json
+import os
 
 class GraphNodes:
     """包含 LangGraph 中所有節點邏輯的類別 - 支援對話式規劃"""
@@ -24,7 +25,9 @@ class GraphNodes:
     def __init__(self):
         """初始化對話相關服務"""
         self.gemini_client = GeminiLLMClient()
-        self.redis_client = redis.Redis(host='localhost', port=6379, db=0)
+        # 從環境變數讀取 Redis 連線設定
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        self.redis_client = redis.from_url(redis_url, decode_responses=True)
         
         # 定義需要收集的資訊
         self.required_info = {

@@ -136,15 +136,21 @@ export const unifiedChat = async (request: UnifiedConversationRequest): Promise<
 
 // 發送單一訊息
 export const sendUnifiedMessage = async (sessionId: string, message: string, metadata?: Record<string, any>): Promise<UnifiedConversationResponse> => {
+  const token = localStorage.getItem("token");
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await axios.post(`${API_BASE_URL}/v1/conversation/message`, {
     session_id: sessionId,
     message,
     metadata
   }, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-      "Content-Type": "application/json",
-    },
+    headers,
   });
 
   return response.data;
@@ -152,10 +158,15 @@ export const sendUnifiedMessage = async (sessionId: string, message: string, met
 
 // 獲取對話狀態
 export const getUnifiedConversationState = async (sessionId: string): Promise<ConversationStateResponse> => {
+  const token = localStorage.getItem("token");
+  const headers: Record<string, string> = {};
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await axios.get(`${API_BASE_URL}/v1/conversation/state/${sessionId}`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
+    headers,
   });
 
   return response.data;
@@ -172,11 +183,16 @@ export const resetUnifiedConversation = async (sessionId: string): Promise<void>
 
 // 獲取智能建議
 export const getUnifiedSuggestions = async (sessionId: string, context?: string): Promise<{session_id: string; suggestions: string[]; context?: string; timestamp: string}> => {
+  const token = localStorage.getItem("token");
+  const headers: Record<string, string> = {};
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await axios.get(`${API_BASE_URL}/v1/conversation/suggestions/${sessionId}`, {
     params: { context },
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
+    headers,
   });
 
   return response.data;

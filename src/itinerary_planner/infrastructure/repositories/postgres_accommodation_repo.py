@@ -70,19 +70,10 @@ class PostgresAccommodationRepository(AccommodationRepository):
     
     def search_by_vector(self, embedding: List[float], top_k: int = 10) -> List[OrmAccommodation]:
         """
-        根據向量相似度搜索住宿
+        根據向量相似度搜索住宿（暫時停用）
         """
-        if not embedding:
-            return []
-        
-        # 使用 pgvector 的餘弦相似度搜尋
-        query = self.db.query(OrmAccommodation).filter(
-            OrmAccommodation.embedding.isnot(None)
-        ).order_by(
-            OrmAccommodation.embedding.cosine_distance(embedding)
-        ).limit(top_k)
-        
-        return query.all()
+        # 暫時移除向量搜尋功能，因為 embedding 欄位已被移除
+        return []
     
     def get_accommodation_by_id(self, accommodation_id: str) -> Optional[OrmAccommodation]:
         """

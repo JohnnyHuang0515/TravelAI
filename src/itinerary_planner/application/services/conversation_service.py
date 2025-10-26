@@ -2,6 +2,7 @@ from typing import Dict, List, Optional, Any
 import logging
 import json
 import redis
+import os
 from sqlalchemy.orm import Session
 
 from ...domain.entities.conversation_state import ConversationState, ConversationStateType
@@ -15,7 +16,9 @@ class ConversationService:
     def __init__(self, db_session: Session):
         self.db = db_session
         self.llm_client = GeminiLLMClient()
-        self.redis_client = redis.Redis(host='localhost', port=6379, db=0)
+        # 從環境變數讀取 Redis 連線設定
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        self.redis_client = redis.from_url(redis_url, decode_responses=True)
         
         # 定義需要收集的資訊
         self.required_info = {
